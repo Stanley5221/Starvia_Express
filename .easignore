@@ -1,0 +1,18 @@
+# Exclude all node_modules anywhere in the monorepo
+**/node_modules/
+
+# Exclude web and backend apps — not needed for mobile builds
+web/
+backend/
+apps/admin/
+
+# Build artifacts and cache
+**/android/
+**/ios/
+**/.expo/
+**/.git/
+
+# Env and log files
+**/.env
+**/.env.local
+**/*.log
