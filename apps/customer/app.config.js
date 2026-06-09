@@ -45,12 +45,13 @@ export default {
       [
         '@rnmapbox/maps',
         {
-          RNMapboxMapsDownloadToken:
+          RNMapboxMapsDownloadsToken:
             process.env.MAPBOX_DOWNLOADS_TOKEN ||
             process.env.EXPO_PUBLIC_MAPBOX_TOKEN ||
             '',
         },
       ],
+      'expo-font',
       'expo-location',
       'expo-notifications',
       [
@@ -62,7 +63,6 @@ export default {
       ],
     ],
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000',
       eas: {
         projectId: '0c52d5ae-df87-40ff-87c3-1d8dd457ed7b',
       },

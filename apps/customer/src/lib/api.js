@@ -13,8 +13,10 @@ function normalizeBase(url) {
 const api = axios.create({ baseURL: normalizeBase(BASE), timeout: 40000 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await storage.getItemAsync('cust_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  try {
+    const token = await storage.getItemAsync('cust_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  } catch (_) {}
   return config;
 });
 
