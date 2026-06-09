@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../../../../shared/api'
 import { formatMoney } from '../../../../shared/currency'
-import { 
-  Building, User, Mail, Phone, MapPin, ArrowLeft, 
-  ShieldCheck, FileText, Check, X, AlertCircle, Save, Loader
+import {
+  Building, User, Mail, Phone, MapPin, ArrowLeft,
+  ShieldCheck, FileText, Check, X, AlertCircle, Save, Loader,
+  Percent, RotateCcw
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -16,13 +17,19 @@ export default function BusinessDetail() {
   const [loading, setLoading] = useState(true)
   const [savingStatus, setSavingStatus] = useState(false)
   const [reviewingDocId, setReviewingDocId] = useState(null)
-  
+
   // Status decision form
   const [status, setStatus] = useState('')
   const [reason, setReason] = useState('')
 
   // Individual document review notes
   const [docNotes, setDocNotes] = useState({})
+
+  // Per-business pricing
+  const [pricingData, setPricingData] = useState({ perBusiness: null, global: null })
+  const [pricingForm, setPricingForm] = useState({ discountPercent: 0, basePrice: '', pricePerKm: '', minPrice: '', label: '' })
+  const [savingPricing, setSavingPricing] = useState(false)
+  const [resettingPricing, setResettingPricing] = useState(false)
 
   async function fetchDetail() {
     try {
@@ -38,9 +45,59 @@ export default function BusinessDetail() {
     }
   }
 
+  async function fetchPricing() {
+    try {
+      const res = await api.get(`/admin/businesses/${id}/pricing`)
+      setPricingData(res.data)
+      const src = res.data.perBusiness || res.data.global || {}
+      setPricingForm({
+        discountPercent: res.data.perBusiness?.discountPercent ?? 0,
+        basePrice:       src.basePrice   ?? '',
+        pricePerKm:      src.pricePerKm  ?? '',
+        minPrice:        src.minPrice    ?? '',
+        label:           res.data.perBusiness?.label ?? '',
+      })
+    } catch (_) {}
+  }
+
   useEffect(() => {
     fetchDetail()
+    fetchPricing()
   }, [id])
+
+  async function handleSavePricing(e) {
+    e.preventDefault()
+    setSavingPricing(true)
+    try {
+      await api.put(`/admin/businesses/${id}/pricing`, {
+        discountPercent: +pricingForm.discountPercent,
+        basePrice:       pricingForm.basePrice !== '' ? +pricingForm.basePrice : undefined,
+        pricePerKm:      pricingForm.pricePerKm !== '' ? +pricingForm.pricePerKm : undefined,
+        minPrice:        pricingForm.minPrice !== '' ? +pricingForm.minPrice : undefined,
+        label:           pricingForm.label || undefined,
+      })
+      toast.success('Custom pricing saved')
+      fetchPricing()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to save pricing')
+    } finally {
+      setSavingPricing(false)
+    }
+  }
+
+  async function handleResetPricing() {
+    if (!window.confirm('Remove custom pricing and revert this business to the global default rate?')) return
+    setResettingPricing(true)
+    try {
+      await api.delete(`/admin/businesses/${id}/pricing`)
+      toast.success('Reverted to global default')
+      fetchPricing()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to reset pricing')
+    } finally {
+      setResettingPricing(false)
+    }
+  }
 
   // Securely download and open document file in a new tab
   async function handleViewFile(docId, fileName, mimeType) {
@@ -320,6 +377,115 @@ export default function BusinessDetail() {
                 <b style={{ color: 'var(--brand-accent)' }}>{formatMoney(business.totalSpend)}</b>
               </div>
             </div>
+          </div>
+
+          {/* Pricing & Discount Card */}
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Percent size={18} style={{ color: 'var(--brand-accent)' }} />
+              <h2 style={{ margin: 0 }}>Pricing & Discount</h2>
+            </div>
+
+            {pricingData.perBusiness ? (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(var(--success-rgb, 52,199,89),0.12)', color: 'var(--success)', borderRadius: 6, padding: '0.2rem 0.6rem', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                <ShieldCheck size={13} /> Custom rate active
+              </div>
+            ) : (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', borderRadius: 6, padding: '0.2rem 0.6rem', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                Using global default
+              </div>
+            )}
+
+            {pricingData.global && (
+              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <b style={{ color: 'var(--text-secondary)' }}>Global defaults:</b>{' '}
+                GH₵{pricingData.global.basePrice} base · GH₵{pricingData.global.pricePerKm}/km · GH₵{pricingData.global.minPrice} min
+                {pricingData.global.discountPercent > 0 && ` · ${pricingData.global.discountPercent}% global discount`}
+              </div>
+            )}
+
+            <form onSubmit={handleSavePricing}>
+              {/* Discount — most prominent */}
+              <div className="input-group" style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  Discount (%) <span style={{ color: 'var(--brand-accent)', fontWeight: 400, fontSize: '0.82rem' }}>— this business only</span>
+                </label>
+                <input
+                  className="input-field"
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  value={pricingForm.discountPercent}
+                  onChange={e => setPricingForm({ ...pricingForm, discountPercent: e.target.value })}
+                />
+                <small style={{ color: 'var(--text-muted)' }}>Override the global discount for this specific partner.</small>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: 16 }}>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Base Price (GH₵)</label>
+                  <input
+                    className="input-field"
+                    type="number"
+                    step="0.01"
+                    placeholder={pricingData.global?.basePrice ?? '5.00'}
+                    value={pricingForm.basePrice}
+                    onChange={e => setPricingForm({ ...pricingForm, basePrice: e.target.value })}
+                  />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Per KM (GH₵)</label>
+                  <input
+                    className="input-field"
+                    type="number"
+                    step="0.01"
+                    placeholder={pricingData.global?.pricePerKm ?? '3.00'}
+                    value={pricingForm.pricePerKm}
+                    onChange={e => setPricingForm({ ...pricingForm, pricePerKm: e.target.value })}
+                  />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Minimum Price (GH₵)</label>
+                  <input
+                    className="input-field"
+                    type="number"
+                    step="0.01"
+                    placeholder={pricingData.global?.minPrice ?? '8.00'}
+                    value={pricingForm.minPrice}
+                    onChange={e => setPricingForm({ ...pricingForm, minPrice: e.target.value })}
+                  />
+                </div>
+                <div className="input-group" style={{ marginBottom: 0 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Rate Label</label>
+                  <input
+                    className="input-field"
+                    type="text"
+                    placeholder="e.g. Partner Rate"
+                    value={pricingForm.label}
+                    onChange={e => setPricingForm({ ...pricingForm, label: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                <button className="btn btn-primary" type="submit" disabled={savingPricing} style={{ flex: 1, justifyContent: 'center' }}>
+                  {savingPricing ? <Loader size={15} className="loading" /> : <><Save size={15} /> Save Custom Rate</>}
+                </button>
+                {pricingData.perBusiness && (
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={handleResetPricing}
+                    disabled={resettingPricing}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    {resettingPricing ? <Loader size={15} className="loading" /> : <><RotateCcw size={15} /> Reset to Global</>}
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
 
         </div>

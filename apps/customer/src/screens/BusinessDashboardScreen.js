@@ -134,6 +134,12 @@ export default function BusinessDashboardScreen({ navigation }) {
             <Text style={styles.sectionTitle}>Your Pricing Tier</Text>
             <View style={styles.pricingCard}>
               <Text style={styles.pricingTierLabel}>{pricing.label}</Text>
+              {pricing.discountPercent > 0 && (
+                <View style={styles.discountBadge}>
+                  <Ionicons name="pricetag-outline" size={14} color="#fff" />
+                  <Text style={styles.discountBadgeText}>{pricing.discountPercent}% partner discount applied</Text>
+                </View>
+              )}
               <View style={styles.pricingRow}>
                 <Text style={styles.pricingKey}>Base Rate</Text>
                 <Text style={styles.pricingVal}>{formatMoney(pricing.basePrice)}</Text>
@@ -229,6 +235,12 @@ const createStyles = (colors) => StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, padding: 14, gap: 8,
   },
   pricingTierLabel: { fontSize: 14, fontWeight: '800', color: colors.accent, marginBottom: 4 },
+  discountBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: colors.success ?? '#34C759', borderRadius: radius.sm,
+    paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', marginBottom: 4,
+  },
+  discountBadgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
   pricingRow:  { flexDirection: 'row', justifyContent: 'space-between' },
   pricingKey:  { fontSize: 13, color: colors.muted },
   pricingVal:  { fontSize: 13, fontWeight: '700', color: colors.text },

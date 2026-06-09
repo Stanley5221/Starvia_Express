@@ -131,6 +131,18 @@ export default function Pricing() {
               <small style={{ color: 'var(--text-muted)' }}>Minimum charge for business deliveries. Default: GH₵ 8.00</small>
             </div>
             <div className="input-group" style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', marginBottom: 8, color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                Global Discount (%) <span style={{ color: 'var(--brand-accent)', fontWeight: 700 }}>— applies to ALL businesses</span>
+              </label>
+              <input className="input-field" type="number" step="1" min="0" max="100"
+                placeholder="0" value={businessConfig.discountPercent ?? 0}
+                onChange={e => setBusinessConfig({ ...businessConfig, discountPercent: +e.target.value })} />
+              <small style={{ color: 'var(--text-muted)' }}>
+                An extra % off the business price applied to every business account.
+                Set per-business overrides from each business's detail page.
+              </small>
+            </div>
+            <div className="input-group" style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', marginBottom: 8, color: 'var(--text-secondary)', fontWeight: 'bold' }}>Price Label</label>
               <input className="input-field" type="text" placeholder="e.g. Business Default Rate" value={businessConfig.label || ''}
                 onChange={e => setBusinessConfig({ ...businessConfig, label: e.target.value })} required />

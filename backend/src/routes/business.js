@@ -121,10 +121,11 @@ router.get('/dashboard', ...bizAuth, async (req, res, next) => {
       recentOrders,
       pricing: pricingDisplay
         ? {
-            pricePerKm:     pricingDisplay.pricePerKm,
-            basePrice:      pricingDisplay.basePrice,
-            minPrice:       pricingDisplay.minPrice,
-            label:          pricingDisplay.label,
+            pricePerKm:      pricingDisplay.pricePerKm,
+            basePrice:       pricingDisplay.basePrice,
+            minPrice:        pricingDisplay.minPrice,
+            discountPercent: pricingDisplay.discountPercent,
+            label:           pricingDisplay.label,
           }
         : null,
     });

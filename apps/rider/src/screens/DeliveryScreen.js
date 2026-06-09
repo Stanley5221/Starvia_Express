@@ -2,8 +2,9 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking, Alert,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import Mapbox from '@rnmapbox/maps';
@@ -350,11 +351,11 @@ export default function DeliveryScreen() {
               >
                 <Mapbox.LineLayer
                   id="route-casing"
-                  style={{ lineColor: '#0f172a', lineWidth: 10, lineCap: 'round', lineJoin: 'round', lineOpacity: 0.55 }}
+                  style={{ lineColor: '#001a33', lineWidth: 12, lineCap: 'round', lineJoin: 'round', lineOpacity: 0.7 }}
                 />
                 <Mapbox.LineLayer
                   id="route-line"
-                  style={{ lineColor: colors.primary, lineWidth: 6, lineCap: 'round', lineJoin: 'round' }}
+                  style={{ lineColor: '#4FC3F7', lineWidth: 6, lineCap: 'round', lineJoin: 'round' }}
                 />
               </Mapbox.ShapeSource>
             )}
@@ -362,17 +363,23 @@ export default function DeliveryScreen() {
             {/* Destination marker (pickup or dropoff) */}
             {mapLat != null && mapLng != null && (
               <Mapbox.PointAnnotation id="destination" coordinate={[mapLng, mapLat]}>
-                <View style={styles.mapMarker}>
-                  <Text style={styles.mapMarkerText}>{goingPickup || atPickup ? '📍' : '🏁'}</Text>
+                <View style={styles.destMarker}>
+                  <Ionicons
+                    name={goingPickup || atPickup ? 'location' : 'flag'}
+                    size={22}
+                    color="#fff"
+                  />
                 </View>
               </Mapbox.PointAnnotation>
             )}
 
-            {/* Rider current position marker */}
+            {/* Rider current position marker — blue navigation arrow dot */}
             {currentPos && (
               <Mapbox.PointAnnotation id="rider-pos" coordinate={[currentPos.lng, currentPos.lat]}>
-                <View style={styles.mapMarker}>
-                  <Text style={styles.mapMarkerText}>🏍️</Text>
+                <View style={styles.riderMarker}>
+                  <View style={styles.riderMarkerInner}>
+                    <Ionicons name="navigate" size={16} color="#fff" />
+                  </View>
                 </View>
               </Mapbox.PointAnnotation>
             )}
@@ -414,6 +421,19 @@ export default function DeliveryScreen() {
           📦 {order.packageSize || 'Medium'} · {order.packageDescription || 'Package'}
           {notes ? ` · ${notes}` : ''}
         </Text>
+
+        {order.packagePhotoUrl ? (
+          <View style={styles.photoBlock}>
+            <Text style={styles.photoLabel}>Package photo</Text>
+            <Image
+              source={{ uri: order.packagePhotoUrl.startsWith('http') || order.packagePhotoUrl.startsWith('data:')
+                ? order.packagePhotoUrl
+                : `${process.env.EXPO_PUBLIC_API_URL}${order.packagePhotoUrl}` }}
+              style={styles.packagePhoto}
+              resizeMode="cover"
+            />
+          </View>
+        ) : null}
 
         {inTransit && !atDropoff && (
           <View style={styles.recipientBlock}>
@@ -467,8 +487,30 @@ const createStyles = (colors) => StyleSheet.create({
   mapsBtnText: { color: colors.muted, fontWeight: '600' },
   primaryBtn: { backgroundColor: colors.primary, borderRadius: 14, padding: 18, alignItems: 'center' },
   primaryText: { color: colors.bg, fontSize: 16, fontWeight: '800' },
-  mapMarker: { alignItems: 'center', justifyContent: 'center' },
-  mapMarkerText: { fontSize: 24, lineHeight: 28 },
+  destMarker: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 3, borderColor: '#fff',
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+  },
+  riderMarker: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(79,195,247,0.25)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  riderMarkerInner: {
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: '#1565C0',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 3, borderColor: '#fff',
+    shadowColor: '#1565C0', shadowOpacity: 0.6, shadowRadius: 6, shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
+  photoBlock: { marginBottom: 12 },
+  photoLabel: { color: colors.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  packagePhoto: { width: '100%', height: 180, borderRadius: 10, backgroundColor: colors.card },
   empty: { flex: 1, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyText: { color: colors.text, fontSize: 18, fontWeight: '700' },
   emptySub: { color: colors.muted, marginTop: 8, textAlign: 'center' },

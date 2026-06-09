@@ -208,7 +208,7 @@ export default function ProfileScreen() {
           {/* Avatar */}
           <TouchableOpacity onPress={uploadProfilePhoto} disabled={uploading} style={styles.avatarWrap}>
             {p.profilePhoto ? (
-              <Image source={{ uri: p.profilePhoto.startsWith('http') ? p.profilePhoto : `${process.env.EXPO_PUBLIC_API_URL}${p.profilePhoto}` }} style={styles.avatarImg} />
+              <Image source={{ uri: p.profilePhoto.startsWith('http') || p.profilePhoto.startsWith('data:') ? p.profilePhoto : `${process.env.EXPO_PUBLIC_API_URL}${p.profilePhoto}` }} style={styles.avatarImg} />
             ) : (
               <LinearGradient colors={[colors.primaryLight, colors.primaryDark]} style={styles.avatarImg}>
                 <Text style={styles.avatarInitials}>{initials}</Text>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView,
-  Alert, ActivityIndicator, Animated, RefreshControl,
+  Alert, ActivityIndicator, Animated, RefreshControl, Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -168,6 +168,12 @@ export default function HomeScreen({ navigation }) {
   const riderId  = rider?.riderId || `RD-${rider?.id?.slice(-5)?.toUpperCase() || '-----'}`;
   const urgencyColor = countdown <= 10 ? colors.danger : countdown <= 20 ? colors.warning : colors.accent;
 
+  const profilePhotoUri = rider?.profilePhoto
+    ? (rider.profilePhoto.startsWith('http') || rider.profilePhoto.startsWith('data:')
+        ? rider.profilePhoto
+        : `${process.env.EXPO_PUBLIC_API_URL}${rider.profilePhoto}`)
+    : null;
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView
@@ -181,8 +187,12 @@ export default function HomeScreen({ navigation }) {
           style={[styles.header, { paddingTop: insets.top + 16 }]}
         >
           <View style={styles.headerRow}>
-            <TouchableOpacity style={styles.avatar}>
-              <Text style={styles.avatarText}>{initials}</Text>
+            <TouchableOpacity style={styles.avatar} onPress={() => navigation.navigate('Profile')}>
+              {profilePhotoUri ? (
+                <Image source={{ uri: profilePhotoUri }} style={styles.avatarImg} />
+              ) : (
+                <Text style={styles.avatarText}>{initials}</Text>
+              )}
             </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.greeting}>Hello, {rider?.fullName?.split(' ')[0] || 'Rider'} 👋</Text>
@@ -363,7 +373,8 @@ const createStyles = (colors) => StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
 
-  avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', ...shadow.sm },
+  avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...shadow.sm },
+  avatarImg: { width: 46, height: 46, borderRadius: 23 },
   avatarText: { color: colors.white, fontWeight: '800', fontSize: 16 },
 
   greeting: { color: colors.text, fontSize: 16, fontWeight: '700' },

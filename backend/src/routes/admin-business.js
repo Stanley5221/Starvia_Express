@@ -283,6 +283,72 @@ router.get('/businesses/:id/documents/:docId/file', ...adminOnly, async (req, re
   } catch (err) { next(err); }
 });
 
+// ── GET /api/v1/admin/businesses/:id/pricing ──────────────────────────────
+// Get per-business pricing config (and global default for comparison)
+router.get('/businesses/:id/pricing', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const [perBusiness, global] = await Promise.all([
+      prisma.businessPricingConfig.findUnique({ where: { businessId: req.params.id } }),
+      prisma.businessPricingConfig.findFirst({ where: { businessId: null } }),
+    ]);
+    res.json({ perBusiness: perBusiness || null, global: global || null });
+  } catch (err) { next(err); }
+});
+
+// ── PUT /api/v1/admin/businesses/:id/pricing ───────────────────────────────
+// Create or update per-business pricing override (including custom discount %)
+router.put('/businesses/:id/pricing', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const { pricePerKm, basePrice, minPrice, discountPercent, label } = req.body;
+
+    if (discountPercent !== undefined && (+discountPercent < 0 || +discountPercent > 100)) {
+      return res.status(400).json({ error: 'discountPercent must be between 0 and 100' });
+    }
+
+    const business = await prisma.business.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, businessName: true },
+    });
+    if (!business) return res.status(404).json({ error: 'Business not found' });
+
+    // Use global defaults as base if no per-business value provided
+    const globalCfg = await prisma.businessPricingConfig.findFirst({ where: { businessId: null } });
+
+    const data = {
+      updatedBy:       req.user.id,
+      pricePerKm:      pricePerKm      !== undefined ? +pricePerKm      : (globalCfg?.pricePerKm ?? 3.0),
+      basePrice:       basePrice       !== undefined ? +basePrice       : (globalCfg?.basePrice  ?? 5.0),
+      minPrice:        minPrice        !== undefined ? +minPrice        : (globalCfg?.minPrice   ?? 8.0),
+      discountPercent: discountPercent !== undefined ? +discountPercent : 0,
+      label:           label?.trim()  || `${business.businessName} Rate`,
+      isActive:        true,
+    };
+
+    const config = await prisma.businessPricingConfig.upsert({
+      where:  { businessId: req.params.id },
+      update: data,
+      create: { businessId: req.params.id, ...data },
+    });
+    res.json(config);
+  } catch (err) { next(err); }
+});
+
+// ── DELETE /api/v1/admin/businesses/:id/pricing ────────────────────────────
+// Remove per-business override — reverts to global default rate
+router.delete('/businesses/:id/pricing', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const existing = await prisma.businessPricingConfig.findUnique({
+      where: { businessId: req.params.id },
+    });
+    if (!existing) return res.status(404).json({ error: 'No custom pricing set for this business' });
+    await prisma.businessPricingConfig.delete({ where: { businessId: req.params.id } });
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
 // ── GET /api/v1/admin/businesses/pricing ──────────────────────────────────
 // Get the global business pricing default
 router.get('/businesses/pricing', ...adminOnly, async (req, res, next) => {

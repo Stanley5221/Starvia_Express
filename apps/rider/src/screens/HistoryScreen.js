@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal,
-  ActivityIndicator, RefreshControl, Platform,
+  ActivityIndicator, RefreshControl, Platform, Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -111,6 +111,32 @@ export default function HistoryScreen() {
                   <Ionicons name="star" size={16} color={colors.warning} />
                   <Text style={styles.ratingLabel}>Customer rating</Text>
                   <StarRow rating={detail.customerRating} />
+                </View>
+              )}
+
+              {detail?.packagePhotoUrl && (
+                <View style={styles.photoSection}>
+                  <Text style={styles.photoSectionLabel}>Package Photo</Text>
+                  <Image
+                    source={{ uri: detail.packagePhotoUrl.startsWith('http') || detail.packagePhotoUrl.startsWith('data:')
+                      ? detail.packagePhotoUrl
+                      : `${process.env.EXPO_PUBLIC_API_URL}${detail.packagePhotoUrl}` }}
+                    style={styles.orderPhoto}
+                    resizeMode="cover"
+                  />
+                </View>
+              )}
+
+              {detail?.deliveryPhotoUrl && (
+                <View style={styles.photoSection}>
+                  <Text style={styles.photoSectionLabel}>Proof of Delivery</Text>
+                  <Image
+                    source={{ uri: detail.deliveryPhotoUrl.startsWith('http') || detail.deliveryPhotoUrl.startsWith('data:')
+                      ? detail.deliveryPhotoUrl
+                      : `${process.env.EXPO_PUBLIC_API_URL}${detail.deliveryPhotoUrl}` }}
+                    style={styles.orderPhoto}
+                    resizeMode="cover"
+                  />
                 </View>
               )}
 
@@ -283,6 +309,10 @@ const createStyles = (colors) => StyleSheet.create({
   modalAmountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.borderLight, marginBottom: 14 },
   modalAmountLabel: { color: colors.muted, fontSize: 14 },
   modalAmount: { color: colors.accent, fontWeight: '900', fontSize: 26 },
+
+  photoSection: { marginBottom: 14 },
+  photoSectionLabel: { fontSize: 10, color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: '700' },
+  orderPhoto: { width: '100%', height: 180, borderRadius: 10, backgroundColor: colors.surface },
 
   closeBtn: { borderRadius: radius.md, padding: 16, alignItems: 'center' },
   closeBtnText: { color: colors.white, fontWeight: '800', fontSize: 16 },
