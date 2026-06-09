@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"c:\\\\Starvia_Express\\\\\" | head -20)",
+      "Read(//c//**)",
+      "Bash(node -e \"require\\('helmet'\\); require\\('nodemailer'\\); console.log\\('OK'\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,390 @@
+// Starvia Express — Prisma Schema
+// Provider: PostgreSQL
+// Release 1: Business Account System added
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  RIDER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PICKED_UP
+  IN_TRANSIT
+  ARRIVED
+  DELIVERED
+  CANCELLED
+}
+
+// ── Release 1: Business Account Enums ────────────────────────────────────────
+
+enum AccountType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum BusinessType {
+  RESTAURANT
+  PHARMACY
+  SUPERMARKET
+  ONLINE_SHOP
+  CORPORATE
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocumentType {
+  GHANA_CARD_FRONT
+  GHANA_CARD_BACK
+  BUSINESS_REGISTRATION
+  TIN
+  BUSINESS_PERMIT
+}
+
+// ─── Core Models ──────────────────────────────────────────────────────────────
+
+model User {
+  id           String      @id @default(cuid())
+  name         String
+  email        String      @unique
+  phone        String?
+  passwordHash String
+  role         Role        @default(CUSTOMER)
+  // Release 1: Differentiates individual vs business customers (role stays CUSTOMER for both)
+  accountType  AccountType @default(INDIVIDUAL)
+  // Closed fleet: set to true when admin provisions a rider account with a temp password
+  mustChangePassword   Boolean   @default(false)
+  isSuspended          Boolean   @default(false)
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relations
+  orders         Order[]         @relation("CustomerOrders")
+  rider          Rider?
+  savedAddresses SavedAddress[]
+  notifications  Notification[]
+  // Release 1: Business owner relation (one User → one Business)
+  business       Business?
+
+  @@index([email])
+  @@index([accountType])
+}
+
+model SavedAddress {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label   String // e.g. home, work
+  address String
+  lat     Float
+  lng     Float
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // order_status, rider_assigned, business_approved, business_rejected, etc.
+  orderId   String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model Rider {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  
+  // Personal info
+  fullName         String
+  phone            String
+  profilePhoto     String?
+  
+  // Motor / vehicle details
+  motorPlate       String
+  motorMake        String
+  motorModel       String
+  motorColor       String
+  motorPhoto       String?
+  
+  // Documents
+  licenceNumber    String
+  licenceExpiry    DateTime
+  licencePhoto     String?
+  
+  // Status
+  isApproved       Boolean  @default(false)
+  isAvailable      Boolean  @default(false)
+  isOnDelivery     Boolean  @default(false)
+  isSuspended      Boolean  @default(false)
+  
+  // Location (updated live via GPS)
+  lastLat          Float?
+  lastLng          Float?
+  lastLocationAt   DateTime?
+  
+  // Push notifications
+  pushToken        String?
+
+  // Stats
+  totalDeliveries  Int      @default(0)
+  averageRating    Float?
+  totalEarnings    Float    @default(0)
+
+  orders           Order[]
+  locations        RiderLocation[]
+
+  @@index([isApproved])
+  @@index([isAvailable])
+  @@index([isApproved, isAvailable, isOnDelivery, isSuspended, lastLat, lastLng])
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  
+  // Customer who placed the order
+  customerId        String
+  customer          User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  
+  // Pickup details
+  pickupAddress     String
+  pickupLat         Float
+  pickupLng         Float
+  pickupContactName String
+  pickupPhone       String
+  pickupNotes       String?
+  
+  // Dropoff / Recipient details
+  dropoffAddress    String
+  dropoffLat        Float
+  dropoffLng        Float
+  recipientName     String
+  recipientPhone    String
+  dropoffNotes      String?
+  
+  // Package info
+  packageDescription String?
+  packageSize        String?
+  packagePhotoUrl    String?  @db.Text
+
+  // Pricing
+  estimatedPrice    Float
+  finalPrice        Float?
+  
+  // Release 1: Business order fields
+  businessId        String?     // set when order placed by a BUSINESS account
+  business          Business?   @relation("BusinessOrders", fields: [businessId], references: [id])
+  businessSaving    Float?      // GH₵ saved vs standard individual rate
+
+  // Assignment
+  riderId           String?
+  rider             Rider?      @relation(fields: [riderId], references: [id])
+  
+  // Status tracking
+  status            OrderStatus @default(PENDING)
+  
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  acceptedAt        DateTime?
+  pickedUpAt        DateTime?
+  deliveredAt       DateTime?
+  cancelledAt       DateTime?
+  
+  // Proof of delivery
+  deliveryPhotoUrl  String?     @db.Text
+  deliverySignature String?
+  
+  // Rating
+  customerRating    Int?
+  customerReview    String?
+
+  @@index([customerId])
+  @@index([riderId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([businessId])
+}
+
+// Real-time GPS trail per order
+model RiderLocation {
+  id        String   @id @default(cuid())
+  riderId   String
+  rider     Rider    @relation(fields: [riderId], references: [id])
+  lat       Float
+  lng       Float
+  heading   Float?
+  speed     Float?
+  timestamp DateTime @default(now())
+
+  @@index([riderId, timestamp])
+}
+
+// Individual customer pricing — managed by admin
+model PricingConfig {
+  id           String   @id @default(cuid())
+  basePrice    Float    @default(5.0)
+  pricePerKm   Float    @default(4.0)
+  minPrice     Float    @default(8.0)
+  currency     String   @default("GHS")
+  updatedAt    DateTime @updatedAt
+  updatedBy    String?
+}
+
+// Geo-dispatch settings — managed by admin, loaded with 60s cache in dispatch.js
+model DispatchConfig {
+  id                String   @id @default(cuid())
+  radiusKm          Float    @default(5.0)
+  fallbackSecs      Int      @default(90)
+  locationFreshMins Int      @default(10)
+  updatedAt         DateTime @updatedAt
+  updatedBy         String?
+}
+
+// Named dispatch zones — each zone overrides the global dispatch radius for orders whose
+// pickup falls within zoneBoundaryKm of the zone center. Closest matching zone wins.
+model DispatchZone {
+  id               String   @id @default(cuid())
+  name             String
+  centerLat        Float
+  centerLng        Float
+  zoneBoundaryKm   Float    @default(50.0)
+  dispatchRadiusKm Float    @default(5.0)
+  isActive         Boolean  @default(true)
+  updatedBy        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ─── Release 1: Business Account Models ──────────────────────────────────────
+
+// Core business entity
+model Business {
+  id                 String             @id @default(cuid())
+
+  // One-to-one with User (the business owner)
+  ownerId            String             @unique
+  owner              User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Registration info
+  businessName       String
+  businessType       BusinessType
+  ownerFullName      String
+  phone              String
+  email              String             @unique
+  businessAddress    String
+  gpsAddress         String?            // Ghana Post GPS code or free text (e.g. GA-123-4567)
+
+  // Verification workflow
+  verificationStatus VerificationStatus @default(PENDING)
+  rejectionReason    String?
+  reviewedBy         String?            // Admin userId who last reviewed
+  reviewedAt         DateTime?
+  isActive           Boolean            @default(true)
+
+  // Delivery stats (updated on each completion; Release 2 may add analytics snapshots)
+  totalDeliveries    Int                @default(0)
+  monthlyDeliveries  Int                @default(0)
+  lastMonthReset     DateTime?          // Tracks when monthlyDeliveries was last zeroed
+  totalSpend         Float              @default(0)
+
+  // Timestamps
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  // Relations
+  documents          BusinessDocument[]
+  pricingConfig      BusinessPricingConfig?
+  orders             Order[]            @relation("BusinessOrders")
+
+  // Future releases (no models yet — stubs for documentation):
+  // rewards          BusinessReward[]         -- Release 2: loyalty rewards
+  // preferredRiders  BusinessRiderAssignment[] -- Release 2: dedicated riders
+  // tier             BusinessTierName?        -- Release 2: Bronze/Silver/Gold/Platinum
+
+  @@index([verificationStatus])
+  @@index([ownerId])
+  @@index([businessType])
+  @@index([createdAt])
+}
+
+// Documents uploaded for KYC/KYB verification
+model BusinessDocument {
+  id            String             @id @default(cuid())
+
+  businessId    String
+  business      Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  type          DocumentType
+  fileUrl       String             // Relative path: /uploads/business/<businessId>/<filename>
+  fileName      String             // Original filename as uploaded
+  mimeType      String             // e.g. image/jpeg, application/pdf
+  fileSizeBytes Int
+
+  // Per-document admin review
+  status        VerificationStatus @default(PENDING)
+  reviewNote    String?
+  reviewedBy    String?            // Admin userId
+  reviewedAt    DateTime?
+
+  uploadedAt    DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // One document slot per type per business (re-upload replaces the old record)
+  @@unique([businessId, type])
+  @@index([businessId])
+  @@index([status])
+}
+
+// Business-specific pricing config
+// businessId = null  → global default for ALL business accounts
+// businessId = <id>  → per-business custom override (admin-assigned)
+model BusinessPricingConfig {
+  id              String    @id @default(cuid())
+
+  businessId      String?   @unique  // null = global business rate
+  business        Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  pricePerKm      Float     @default(3.0)   // GH₵/km for business accounts
+  basePrice       Float     @default(5.0)   // GH₵ flag-fall / base charge
+  minPrice        Float     @default(8.0)   // GH₵ minimum order price
+  discountPercent Float     @default(0)     // Additional % discount (for Release 2 tier logic)
+  label           String?   @default("Business Rate")
+  isActive        Boolean   @default(true)
+  updatedBy       String?
+  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime  @default(now())
+
+  @@index([businessId])
+}

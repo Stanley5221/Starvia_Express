@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall *)",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\Starvia_Express\\\\apps\\\\customer\\\\node_modules\\\\react-native-gesture-handler\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k,v\\) for k,v in d.get\\('dependencies',{}\\).items\\(\\) if 'navigation' in k]\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('dependencies',{}\\), indent=2\\)\\)\")",
+      "Bash(xargs grep -l \"navigation\\\\|Navigator\\\\|Stack\")",
+      "Bash(npm install *)",
+      "PowerShell(Head-Object -First 20)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Starvia_Express\\\\apps\\\\customer\\\\android\\\\app\\\\build\\\\generated\" -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in \".kt\", \".java\" } | Select-Object FullName | head -30)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Starvia_Express\\\\apps\\\\customer\\\\android\\\\app\\\\build\\\\generated\" -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in \".kt\", \".java\" } | Select-Object -First 30 -ExpandProperty FullName)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Starvia_Express\\\\apps\\\\customer\\\\node_modules\\\\expo-modules-autolinking\\\\android\\\\expo-gradle-plugin\\\\expo-autolinking-plugin\" -ErrorAction SilentlyContinue | Where-Object { !$_.PSIsContainer } | Select-Object -ExpandProperty FullName | Select-Object -First 20)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Starvia_Express\\\\apps\\\\customer\\\\node_modules\\\\expo-modules-core\\\\android\\\\build\\\\generated\" -ErrorAction SilentlyContinue | Where-Object { !$_.PSIsContainer } | Select-Object -ExpandProperty FullName)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Starvia_Express\\\\apps\\\\rider\\\\node_modules\\\\expo-modules-core\\\\android\\\\build\\\\generated\" -ErrorAction SilentlyContinue | Where-Object { !$_.PSIsContainer } | Select-Object -ExpandProperty FullName)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Starvia_Express\\\\apps\\\\customer\\\\node_modules\\\\expo\\\\android\\\\build\\\\generated\" -ErrorAction SilentlyContinue | Where-Object { !$_.PSIsContainer } | Select-Object -ExpandProperty FullName)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d.get\\('version'\\)\\); print\\('peerDeps:', d.get\\('peerDependencies'\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d.get\\('version'\\)\\)\")",
+      "PowerShell(head -30)",
+      "PowerShell(python -c \"import sys,json; d=json.load\\(sys.stdin\\); mods=d.get\\('modules',{}\\); print\\('Modules:', list\\(mods.keys\\(\\)\\)[:20]\\)\" 2>&1)",
+      "PowerShell(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k: d[k] for k in ['version','main','exports','react-native'] if k in d}, indent=2\\)\\)\" 2>&1)",
+      "PowerShell(Get-ChildItem \"c:\\\\Starvia_Express\\\\apps\\\\customer\\\\android\\\\app\\\\build\\\\generated\" -Recurse | Where-Object { $_.Name -match \"Expo|expo|Package|package\" } | Select-Object FullName | Select-Object -First 20)",
+      "PowerShell(Get-ChildItem \"c:\\\\Starvia_Express\\\\apps\\\\customer\\\\android\" -Recurse | Where-Object { $_.Name -match \"Module|Gradient|linear\" } | Select-Object FullName | Select-Object -First 20)",
+      "PowerShell(Get-ChildItem \"c:\\\\Starvia_Express\\\\apps\\\\customer\\\\android\\\\app\\\\build\" -Recurse | Where-Object { $_.Name -match \"PackageList|ExpoModules\" } | Select-Object FullName)",
+      "Read(//c/Starvia_Express/apps/customer/node_modules/expo-modules-core/build/**)",
+      "PowerShell(Get-ChildItem \"c:\\\\Starvia_Express\\\\apps\\\\customer\\\\node_modules\\\\expo-modules-core\" -Recurse | Where-Object { !$_.PSIsContainer } | ForEach-Object { $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue; if \\($content -match \"Exported view managers\"\\) { $_.FullName } } | Select-Object -First 5)",
+      "PowerShell(Get-ChildItem \"c:\\\\Starvia_Express\\\\apps\\\\customer\\\\android\\\\app\\\\build\\\\intermediates\\\\javac\\\\debug\\\\compileDebugJavaWithJavac\" -Recurse | Where-Object { $_.Name -match \"Expo|expo|Module|module\" } | Select-Object FullName | Select-Object -First 15)",
+      "PowerShell(Get-ChildItem \"c:\\\\Starvia_Express\\\\apps\\\\customer\\\\android\\\\app\\\\build\\\\intermediates\" -Recurse | Where-Object { $_.Name -match \"gradient|linear|Gradient|Linear|expo_modules|ExpoModules|PackageList\" } | Select-Object FullName | Select-Object -First 15)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\emulator\\\\emulator.exe\" -list-avds 2>&1)",
+      "PowerShell(Start-Process \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\emulator\\\\emulator.exe\" -ArgumentList \"-avd Pixel_9a\" -WindowStyle Hidden)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices 2>&1)",
+      "PowerShell($timeout = 120; $elapsed = 0; while \\($elapsed -lt $timeout\\) { Start-Sleep -Seconds 5; $elapsed += 5; $status = \\(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s emulator-5556 get-state 2>&1\\); if \\($status -eq \"device\"\\) { Write-Host \"Emulator ready!\"; break } else { Write-Host \"Still booting... \\($elapsed s\\)\" } })",
+      "PowerShell(Start-Process \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\emulator\\\\emulator.exe\" -ArgumentList \"-avd Pixel_7a\" -WindowStyle Hidden)",
+      "PowerShell(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s emulator-5556 emu kill 2>&1; Start-Sleep -Seconds 3; & \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices 2>&1)",
+      "PowerShell(Start-Process \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\emulator\\\\emulator.exe\" -ArgumentList \"-avd Pixel_7a -no-snapshot-load\" -WindowStyle Normal)",
+      "PowerShell($timeout = 120; $elapsed = 0; while \\($elapsed -lt $timeout\\) { Start-Sleep -Seconds 5; $elapsed += 5; $out = \\(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" devices 2>&1\\) -join \"`n\"; $ready = $out -match \"emulator-5556\\\\s+device\"; if \\($ready\\) { Write-Host \"Pixel_7a is online!\"; break } else { Write-Host \"Waiting... \\($elapsed s\\)\" } })",
+      "PowerShell($timeout = 180; $elapsed = 0; while \\($elapsed -lt $timeout\\) { Start-Sleep -Seconds 8; $elapsed += 8; $boot = \\(& \"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s emulator-5556 shell getprop sys.boot_completed 2>&1\\); if \\($boot -match \"1\"\\) { Write-Host \"Boot complete!\"; break } else { Write-Host \"Booting... \\($elapsed s\\) status: $boot\" } })"
+    ]
+  }
+}

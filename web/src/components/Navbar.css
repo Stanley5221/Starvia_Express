@@ -1,0 +1,70 @@
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: linear-gradient(135deg, rgba(165, 14, 42, 0.95), rgba(210, 46, 74, 0.95));
+  backdrop-filter: blur(16px);
+  border-bottom: 2px solid #F5A623;
+  box-shadow: 0 4px 20px rgba(165, 14, 42, 0.3);
+}
+.nav-inner {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding-top: 1rem; padding-bottom: 1rem;
+}
+.nav-logo {
+  display: flex; align-items: center;
+}
+.navbar-logo {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+.nav-links {
+  display: flex; align-items: center; gap: 1.5rem; flex: 1;
+  margin-left: 1rem;
+}
+.nav-link {
+  color: rgba(255, 255, 255, 0.85); font-size: .95rem; font-weight: 600;
+  transition: all .3s; display: flex; align-items: center; gap: .3rem;
+}
+.nav-link:hover, .nav-link.active { 
+  color: #F5A623;
+  text-shadow: 0 0 8px rgba(245, 166, 35, 0.4);
+}
+.nav-auth {
+  display: flex; align-items: center; gap: 1rem; margin-left: auto;
+}
+.nav-notif-btn { position: relative; color: var(--text-secondary); margin-right: .5rem; }
+.notif-badge {
+  position: absolute; top: -4px; right: -6px;
+  background: #EF4444; color: #fff; font-size: .65rem; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.nav-user { display: flex; align-items: center; gap: .8rem; }
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(245, 166, 35, 0.2); border: 2px solid #F5A623;
+  display: flex; align-items: center; justify-content: center; color: #F5A623;
+  box-shadow: 0 0 12px rgba(245, 166, 35, 0.3);
+}
+.user-name { font-size: .9rem; font-weight: 600; color: #FFFFFF; }
+.nav-toggle {
+  display: none; background: none; border: none; color: #FFFFFF;
+  margin-left: auto; font-size: 1.5rem;
+}
+.nav-drawer {
+  display: flex; flex-direction: column; gap: .75rem;
+  padding: 1rem 1.5rem 1.25rem;
+  border-top: 2px solid #F5A623;
+  background: linear-gradient(135deg, rgba(165, 14, 42, 0.95), rgba(210, 46, 74, 0.95));
+}
+
+@media (max-width: 768px) {
+  .nav-links, .nav-auth { display: none; }
+  .nav-toggle { display: flex; }
+}
+
+@media (max-width: 768px) {
+  .nav-links, .nav-auth { display: none; }
+  .nav-toggle { display: flex; }
+}

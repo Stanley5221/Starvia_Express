@@ -1,0 +1,79 @@
+/* Shared auth page styles */
+.auth-page {
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; padding: 2rem 1rem; position: relative;
+  background: linear-gradient(180deg, rgba(165, 14, 42, 0.08) 0%, transparent 50%);
+}
+.auth-glow {
+  position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 500px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(245, 166, 35, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+.auth-card { width: 100%; max-width: 420px; }
+.auth-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.auth-logo-img {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+.auth-card h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: .4rem; letter-spacing: -0.5px; }
+.auth-sub { color: var(--text-secondary); font-size: .95rem; margin-bottom: 1.8rem; font-weight: 500; }
+.auth-switch { text-align: center; font-size: .9rem; color: var(--text-secondary); margin-top: 1.5rem; }
+.auth-switch a { color: #F5A623; font-weight: 700; }
+.auth-switch a:hover { text-decoration: underline; }
+
+.w-full { width: 100%; justify-content: center; margin-top: .5rem; }
+
+.input-icon-wrap { position: relative; }
+.input-icon {
+  position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
+  color: #F5A623; pointer-events: none;
+}
+.input-field.padded { padding-left: 2.5rem; }
+
+.role-toggle {
+  display: flex; gap: .5rem; margin-bottom: 1.5rem;
+  background: rgba(245, 166, 35, 0.08); border-radius: var(--radius-md); padding: .35rem;
+  border: 2px solid rgba(245, 166, 35, 0.2);
+}
+.role-toggle button {
+  flex: 1; padding: .65rem; border-radius: calc(var(--radius-md) - 2px);
+  border: none; background: none; color: var(--text-secondary);
+  font-size: .9rem; font-weight: 700; display: flex; align-items: center;
+  justify-content: center; gap: .4rem; transition: all .3s;
+}
+.role-toggle button.active {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(165, 14, 42, 0.4);
+}
+
+.rider-photo-upload {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.rider-photo-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(245, 166, 35, 0.12);
+  border: 2px solid rgba(245, 166, 35, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+.rider-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

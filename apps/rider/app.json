@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "Starvia Rider",
+    "slug": "starvia-rider",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#8A053B"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.starvia.rider",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Starvia Rider uses your location to navigate to pickups and drop-offs.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Starvia Rider uses your location in the background to track active deliveries.",
+        "NSPhotoLibraryUsageDescription": "Starvia Rider needs access to your photos to update your profile picture.",
+        "NSCameraUsageDescription": "Starvia Rider needs camera access to take delivery proof photos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#8A053B"
+      },
+      "package": "com.starvia.rider",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./public/favicon.png"
+    },
+    "plugins": [
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadsToken": "MAPBOX_DOWNLOADS_TOKEN"
+        }
+      ],
+      "expo-location",
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Starvia Rider to update your profile picture.",
+          "cameraPermission": "Allow Starvia Rider to take delivery proof photos."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}
