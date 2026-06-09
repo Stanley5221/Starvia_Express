@@ -6,7 +6,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
-import { colors, radius, shadow, STATUS_COLORS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow, STATUS_COLORS } from '../constants/theme';
 import { formatMoney } from '../constants/currency';
 
 const FILTERS = [
@@ -25,6 +26,8 @@ function formatDate(iso) {
 }
 
 export default function BusinessOrdersScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [orders, setOrders]         = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -151,7 +154,7 @@ export default function BusinessOrdersScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 16, paddingBottom: 14,

@@ -7,7 +7,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 
 const BUSINESS_TYPES = [
   { value: 'RESTAURANT', label: 'Restaurant' },
@@ -19,6 +20,8 @@ const BUSINESS_TYPES = [
 ];
 
 function Field({ label, icon, value, onChangeText, placeholder, keyboard = 'default', secure = false, autoCapitalize = 'none', inputRef, onSubmitEditing, returnKeyType = 'next' }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [show, setShow] = useState(false);
   return (
     <View style={styles.fieldWrap}>
@@ -49,6 +52,8 @@ function Field({ label, icon, value, onChangeText, placeholder, keyboard = 'defa
 }
 
 function BusinessTypeSelector({ value, onChange }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [open, setOpen] = useState(false);
   const selected = BUSINESS_TYPES.find(t => t.value === value);
   return (
@@ -79,6 +84,8 @@ function BusinessTypeSelector({ value, onChange }) {
 }
 
 export default function RegisterScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { register } = useAuth();
   const insets  = useSafeAreaInsets();
   const [type, setType]       = useState('INDIVIDUAL'); // 'INDIVIDUAL' | 'BUSINESS'
@@ -234,7 +241,7 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   scroll:   { flexGrow: 1, paddingHorizontal: 24 },
   backBtn:  { marginBottom: 16 },
   title:    { fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 6, letterSpacing: -0.5 },

@@ -7,7 +7,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 import { formatGHSFull } from '../constants/currency';
 
 const FILTERS = [
@@ -17,13 +18,9 @@ const FILTERS = [
   { id: 'Rated',     label: 'Rated',     icon: 'star' },
 ];
 
-const STATUS_COLORS = {
-  DELIVERED: colors.success,
-  CANCELLED: colors.danger,
-  default:   colors.muted,
-};
-
 function StarRow({ rating }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   if (!rating) return <Text style={styles.noRating}>Not rated</Text>;
   return (
     <View style={{ flexDirection: 'row', gap: 2 }}>
@@ -35,12 +32,22 @@ function StarRow({ rating }) {
 }
 
 export default function HistoryScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [filter, setFilter]       = useState('All');
   const [orders, setOrders]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [detail, setDetail]       = useState(null);
+
+  const STATUS_COLORS = {
+    DELIVERED: colors.success,
+    CANCELLED: colors.danger,
+    default:   colors.muted,
+  };
+
+  function statusColor(s) { return STATUS_COLORS[s] || STATUS_COLORS.default; }
 
   useEffect(() => { load(); }, [filter]);
 
@@ -57,8 +64,6 @@ export default function HistoryScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true); await load(); setRefreshing(false);
   }, [filter]);
-
-  function statusColor(s) { return STATUS_COLORS[s] || STATUS_COLORS.default; }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -210,6 +215,8 @@ export default function HistoryScreen() {
 }
 
 function DetailRow({ icon, label, value }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   if (!value) return null;
   return (
     <View style={styles.detailRow}>
@@ -222,7 +229,7 @@ function DetailRow({ icon, label, value }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 20 },
   pageTitle: { fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 16 },
 

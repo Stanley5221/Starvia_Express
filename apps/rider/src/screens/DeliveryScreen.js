@@ -11,13 +11,15 @@ import api from '../lib/api';
 import { connectSocket } from '../lib/socket';
 import { useAuth } from '../context/AuthContext';
 import { useActiveOrder } from '../context/ActiveOrderContext';
-import { colors } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 function initials(name) {
   return (name || '?').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
 export default function DeliveryScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { rider } = useAuth();
   const { activeOrder, refreshActiveOrder, setActiveOrder } = useActiveOrder();
   const [order, setOrder] = useState(activeOrder);
@@ -357,7 +359,7 @@ export default function DeliveryScreen() {
               </Mapbox.ShapeSource>
             )}
 
-            {/* Destination marker (pickup 📍 or dropoff 🏁) */}
+            {/* Destination marker (pickup or dropoff) */}
             {mapLat != null && mapLng != null && (
               <Mapbox.PointAnnotation id="destination" coordinate={[mapLng, mapLat]}>
                 <View style={styles.mapMarker}>
@@ -435,7 +437,7 @@ export default function DeliveryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   mapArea: { height: '42%', backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border },
   mapPlaceholder: { fontSize: 28 },

@@ -6,9 +6,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 
-function PasswordField({ label, value, onChange, placeholder }) {
+function PasswordField({ label, value, onChange, placeholder, colors, styles }) {
   const [show, setShow] = useState(false);
   return (
     <View style={styles.fieldWrap}>
@@ -33,6 +34,8 @@ function PasswordField({ label, value, onChange, placeholder }) {
 }
 
 export default function ChangePasswordScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [current, setCurrent]   = useState('');
   const [next, setNext]         = useState('');
@@ -65,8 +68,8 @@ export default function ChangePasswordScreen({ navigation }) {
         <Text style={styles.subtitle}>Choose a strong password to secure your account</Text>
 
         <View style={styles.card}>
-          <PasswordField label="Current Password" value={current} onChange={setCurrent} placeholder="Enter current password" />
-          <PasswordField label="New Password" value={next} onChange={setNext} placeholder="Min. 8 characters" />
+          <PasswordField label="Current Password" value={current} onChange={setCurrent} placeholder="Enter current password" colors={colors} styles={styles} />
+          <PasswordField label="New Password" value={next} onChange={setNext} placeholder="Min. 8 characters" colors={colors} styles={styles} />
 
           <TouchableOpacity onPress={handleSubmit} disabled={loading} style={[styles.btn, loading && { opacity: 0.7 }]}>
             {loading
@@ -80,7 +83,7 @@ export default function ChangePasswordScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   scroll:   { flexGrow: 1, paddingHorizontal: 24 },
   backBtn:  { marginBottom: 16 },
   title:    { fontSize: 26, fontWeight: '900', color: colors.text, marginBottom: 6 },

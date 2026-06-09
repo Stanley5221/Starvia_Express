@@ -3,7 +3,8 @@ import {
   TouchableOpacity, Text, ActivityIndicator, Animated, StyleSheet, View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 
 export default function Button({
   title,
@@ -16,6 +17,8 @@ export default function Button({
   fullWidth = false,
   style,
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const scale = useRef(new Animated.Value(1)).current;
   const pressIn  = () => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, friction: 8 }).start();
   const pressOut = () => Animated.spring(scale, { toValue: 1,    useNativeDriver: true, friction: 8 }).start();
@@ -94,7 +97,7 @@ export default function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   base: {
     borderRadius: radius.md,
     alignItems: 'center',

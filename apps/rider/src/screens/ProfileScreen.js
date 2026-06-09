@@ -10,10 +10,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 import { formatGHS } from '../constants/currency';
 
-function licenceBadge(expiry) {
+function licenceBadge(expiry, colors) {
   if (!expiry) return null;
   const days = Math.ceil((new Date(expiry) - new Date()) / (1000 * 60 * 60 * 24));
   if (days < 0)   return { text: 'EXPIRED',               color: colors.danger };
@@ -27,6 +28,8 @@ function toDateInput(iso) {
 }
 
 export default function ProfileScreen() {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const { rider, logout, refreshProfile } = useAuth();
   const [profile, setProfile]   = useState(rider);
@@ -119,7 +122,7 @@ export default function ProfileScreen() {
   if (!p) return null;
 
   const initials  = p.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'RD';
-  const lic       = licenceBadge(p.licenceExpiry);
+  const lic       = licenceBadge(p.licenceExpiry, colors);
   const riderId   = p.riderId || `RD-${p.id?.slice(-5)?.toUpperCase() || '-----'}`;
 
   return (
@@ -287,6 +290,15 @@ export default function ProfileScreen() {
           <ActionBtn icon="create-outline" label="Edit Profile" onPress={openEditModal} />
           <ActionBtn icon="lock-closed-outline" label="Change Password" onPress={() => setPwVisible(true)} />
 
+          {/* Theme toggle */}
+          <TouchableOpacity onPress={toggleTheme} style={styles.actionBtn} activeOpacity={0.75}>
+            <View style={styles.actionIconWrap}>
+              <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={18} color={colors.accent} />
+            </View>
+            <Text style={styles.actionLabel}>{isDark ? 'Light Mode' : 'Dark Mode'}</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+          </TouchableOpacity>
+
           {/* Logout */}
           <TouchableOpacity onPress={handleLogout} disabled={loggingOut} style={styles.logoutBtn}>
             {loggingOut
@@ -304,10 +316,14 @@ export default function ProfileScreen() {
 }
 
 function SectionLabel({ children }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return <Text style={styles.formSectionLabel}>{children}</Text>;
 }
 
 function InfoRow({ icon, label, value, badge, last }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <View style={[styles.infoRow, last && { borderBottomWidth: 0 }]}>
       <View style={styles.infoIconWrap}>
@@ -323,6 +339,8 @@ function InfoRow({ icon, label, value, badge, last }) {
 }
 
 function ActionBtn({ icon, label, onPress }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <TouchableOpacity onPress={onPress} style={styles.actionBtn} activeOpacity={0.75}>
       <View style={styles.actionIconWrap}>
@@ -335,6 +353,8 @@ function ActionBtn({ icon, label, onPress }) {
 }
 
 function ModalField({ label, value, onChangeText, secureTextEntry, keyboardType, autoCapitalize, placeholder, rightIcon }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -355,7 +375,7 @@ function ModalField({ label, value, onChangeText, secureTextEntry, keyboardType,
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   // Header
   headerGradient: { alignItems: 'center', paddingBottom: 28, paddingHorizontal: 20 },
 

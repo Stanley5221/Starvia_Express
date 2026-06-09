@@ -6,7 +6,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
-import { colors, radius } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius } from '../constants/theme';
 import OrderCard from '../components/OrderCard';
 
 const FILTERS = [
@@ -19,6 +20,8 @@ const FILTERS = [
 const ACTIVE = ['PENDING', 'ACCEPTED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED'];
 
 export default function OrdersScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [orders, setOrders]     = useState([]);
   const [filter, setFilter]     = useState('all');
@@ -122,7 +125,7 @@ export default function OrdersScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingBottom: 12,

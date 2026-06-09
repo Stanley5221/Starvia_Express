@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 export default function AwaitingApprovalScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { logout } = useAuth();
 
   return (
@@ -20,7 +22,7 @@ export default function AwaitingApprovalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, justifyContent: 'center', padding: 32, alignItems: 'center' },
   icon: { fontSize: 48, marginBottom: 16 },
   title: { color: colors.text, fontSize: 22, fontWeight: '800', marginBottom: 12 },

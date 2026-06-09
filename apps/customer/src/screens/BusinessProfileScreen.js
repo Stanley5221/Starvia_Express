@@ -7,17 +7,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 
-const STATUS_COLORS_MAP = {
-  APPROVED:     colors.success,
-  PENDING:      colors.warning,
-  UNDER_REVIEW: colors.info,
-  REJECTED:     colors.danger,
-  SUSPENDED:    colors.danger,
-};
-
-function ReadField({ label, value }) {
+function ReadField({ label, value, colors, styles }) {
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -30,6 +23,8 @@ function ReadField({ label, value }) {
 }
 
 export default function BusinessProfileScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const { refreshUser } = useAuth();
   const [profile, setProfile] = useState(null);
@@ -37,6 +32,14 @@ export default function BusinessProfileScreen({ navigation }) {
   const [saving, setSaving]   = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm]       = useState({ phone: '', businessAddress: '', gpsAddress: '' });
+
+  const STATUS_COLORS_MAP = {
+    APPROVED:     colors.success,
+    PENDING:      colors.warning,
+    UNDER_REVIEW: colors.info,
+    REJECTED:     colors.danger,
+    SUSPENDED:    colors.danger,
+  };
 
   useEffect(() => {
     api.get('/business/profile').then(({ data }) => {
@@ -96,10 +99,10 @@ export default function BusinessProfileScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Business Information</Text>
           <View style={styles.card}>
-            <ReadField label="Business Name"  value={profile?.businessName} />
-            <ReadField label="Business Type"  value={profile?.businessType?.replace(/_/g, ' ')} />
-            <ReadField label="Owner Name"     value={profile?.ownerFullName} />
-            <ReadField label="Email"          value={profile?.email} />
+            <ReadField label="Business Name"  value={profile?.businessName} colors={colors} styles={styles} />
+            <ReadField label="Business Type"  value={profile?.businessType?.replace(/_/g, ' ')} colors={colors} styles={styles} />
+            <ReadField label="Owner Name"     value={profile?.ownerFullName} colors={colors} styles={styles} />
+            <ReadField label="Email"          value={profile?.email} colors={colors} styles={styles} />
           </View>
         </View>
 
@@ -159,7 +162,7 @@ export default function BusinessProfileScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

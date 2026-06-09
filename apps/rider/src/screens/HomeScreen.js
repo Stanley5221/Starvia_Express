@@ -10,7 +10,8 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useActiveOrder } from '../context/ActiveOrderContext';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 import { formatGHSFull } from '../constants/currency';
 
 Notifications.setNotificationHandler({
@@ -19,7 +20,9 @@ Notifications.setNotificationHandler({
 
 const OFFER_SECONDS = 30;
 
-function PulseRing({ color = colors.accent, size = 80 }) {
+function PulseRing({ color, size = 80 }) {
+  const { colors } = useTheme();
+  const resolvedColor = color ?? colors.accent;
   const ring1 = useRef(new Animated.Value(0)).current;
   const ring2 = useRef(new Animated.Value(0)).current;
 
@@ -43,7 +46,7 @@ function PulseRing({ color = colors.accent, size = 80 }) {
   const ringStyle = (val) => ({
     position: 'absolute',
     width: size, height: size, borderRadius: size / 2,
-    borderWidth: 2, borderColor: color,
+    borderWidth: 2, borderColor: resolvedColor,
     opacity: val.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.6, 0.2, 0] }),
     transform: [{ scale: val.interpolate({ inputRange: [0, 1], outputRange: [1, 2.2] }) }],
   });
@@ -52,14 +55,16 @@ function PulseRing({ color = colors.accent, size = 80 }) {
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={ringStyle(ring1)} />
       <Animated.View style={ringStyle(ring2)} />
-      <View style={[styles.pulseCore, { width: size * 0.45, height: size * 0.45, borderRadius: size * 0.225, backgroundColor: color + '25', borderColor: color }]}>
-        <Ionicons name="radio" size={20} color={color} />
+      <View style={{ width: size * 0.45, height: size * 0.45, borderRadius: size * 0.225, backgroundColor: resolvedColor + '25', borderColor: resolvedColor, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 }}>
+        <Ionicons name="radio" size={20} color={resolvedColor} />
       </View>
     </View>
   );
 }
 
 function ActiveBanner({ order, onPress }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const anim = Animated.loop(Animated.sequence([
@@ -91,6 +96,8 @@ function ActiveBanner({ order, onPress }) {
 }
 
 export default function HomeScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const { rider, refreshProfile } = useAuth();
   const { incomingOffer, acceptOrder, rejectOrder, setIncomingOffer, activeOrder } = useActiveOrder();
@@ -352,7 +359,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
 
@@ -437,7 +444,6 @@ const styles = StyleSheet.create({
 
   // Waiting state
   waitingCard: { backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.success + '30', padding: 32, alignItems: 'center', gap: 14, marginBottom: 16 },
-  pulseCore:   { alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
   waitingTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   waitingSub:   { fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 20 },
 

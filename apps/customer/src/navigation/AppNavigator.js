@@ -5,7 +5,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { colors, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { shadow } from '../constants/theme';
 
 import OnboardingScreen        from '../screens/OnboardingScreen';
 import LoginScreen             from '../screens/LoginScreen';
@@ -26,7 +27,6 @@ import BusinessOrdersScreen    from '../screens/BusinessOrdersScreen';
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
 
-// ── Animated tab icon ────────────────────────────────────────────────────────
 function TabIcon({ name, focused, color }) {
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -43,8 +43,8 @@ function TabIcon({ name, focused, color }) {
   );
 }
 
-// ── Custom center "Send" tab button ──────────────────────────────────────────
 function SendButton({ onPress }) {
+  const { colors } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
   const press = () => {
     Animated.sequence([
@@ -55,16 +55,16 @@ function SendButton({ onPress }) {
   };
   return (
     <TouchableOpacity onPress={press} activeOpacity={1} style={styles.sendWrap}>
-      <Animated.View style={[styles.sendBtn, { transform: [{ scale }] }]}>
+      <Animated.View style={[styles.sendBtn, { backgroundColor: colors.primary, transform: [{ scale }] }]}>
         <Ionicons name="add" size={28} color={colors.white} />
       </Animated.View>
-      <Text style={styles.sendLabel}>Send</Text>
+      <Text style={[styles.sendLabel, { color: colors.accent }]}>Send</Text>
     </TouchableOpacity>
   );
 }
 
-// ── Notification bell header button ──────────────────────────────────────────
 function NotificationBell({ navigation }) {
+  const { colors } = useTheme();
   return (
     <TouchableOpacity
       onPress={() => navigation.navigate('Notifications')}
@@ -76,20 +76,21 @@ function NotificationBell({ navigation }) {
   );
 }
 
-// ── Main tab navigator ────────────────────────────────────────────────────────
 function MainTabs({ navigation }) {
   const insets      = useSafeAreaInsets();
+  const { colors }  = useTheme();
   const { isBusiness } = useAuth();
   const tabH        = 56 + Math.max(insets.bottom, 8);
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        // Business dashboard manages its own header; individual home uses the tab header
         headerShown: route.name === 'Home' && !isBusiness,
         headerStyle: { backgroundColor: colors.bg },
         headerShadowVisible: false,
-        headerTitle: () => <Text style={{ fontSize: 20, fontWeight: '900', color: colors.text }}>Starvia Express</Text>,
+        headerTitle: () => (
+          <Text style={{ fontSize: 20, fontWeight: '900', color: colors.text }}>Starvia Express</Text>
+        ),
         headerRight: () => <NotificationBell navigation={navigation} />,
         tabBarStyle: {
           backgroundColor: colors.surface,
@@ -125,7 +126,9 @@ function MainTabs({ navigation }) {
         name="Orders"
         component={OrdersScreen}
         options={{
-          tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'receipt' : 'receipt-outline'} focused={focused} color={color} />,
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'receipt' : 'receipt-outline'} focused={focused} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -133,7 +136,7 @@ function MainTabs({ navigation }) {
         component={PlaceOrderScreen}
         options={{
           tabBarLabel: () => null,
-          tabBarIcon: () => null,
+          tabBarIcon:  () => null,
           tabBarButton: (props) => <SendButton onPress={props.onPress} />,
         }}
       />
@@ -141,16 +144,18 @@ function MainTabs({ navigation }) {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} color={color} />,
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
   );
 }
 
-// ── Root navigator ────────────────────────────────────────────────────────────
 export default function AppNavigator() {
   const { user, loading } = useAuth();
+  const { colors } = useTheme();
 
   if (loading) {
     return (
@@ -171,11 +176,7 @@ export default function AppNavigator() {
       ) : (
         <>
           <Stack.Screen name="MainTabs" component={MainTabs} />
-          <Stack.Screen
-            name="TrackOrder"
-            component={TrackOrderScreen}
-            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
-          />
+          <Stack.Screen name="TrackOrder"        component={TrackOrderScreen}        options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
           <Stack.Screen name="Notifications"     component={NotificationsScreen}     options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="ChangePassword"    component={ChangePasswordScreen}    options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="SavedAddresses"    component={SavedAddressesScreen}    options={{ animation: 'slide_from_right' }} />
@@ -200,7 +201,6 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
@@ -209,6 +209,5 @@ const styles = StyleSheet.create({
   sendLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.accent,
   },
 });

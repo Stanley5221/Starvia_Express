@@ -11,7 +11,8 @@ import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import api from '../lib/api';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 import { formatMoney } from '../constants/currency';
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '';
@@ -55,6 +56,8 @@ async function fetchDirections(pickup, dropoff) {
 
 // ── Address Search Input ──────────────────────────────────────────────────────
 function AddressInput({ label, value, onChange, onSelect, placeholder, showGPS, onGPS, gpsLoading, color }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching]     = useState(false);
   const debounce = useRef(null);
@@ -130,6 +133,8 @@ function AddressInput({ label, value, onChange, onSelect, placeholder, showGPS, 
 
 // ── Mapbox Map ────────────────────────────────────────────────────────────────
 function DeliveryMap({ pickupCoords, dropoffCoords, routeCoords, style }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   if (Platform.OS === 'web') {
     return (
       <View style={[style, styles.mapPlaceholder]}>
@@ -198,6 +203,8 @@ function DeliveryMap({ pickupCoords, dropoffCoords, routeCoords, style }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function PlaceOrderScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const stepAnim = useRef(new Animated.Value(0)).current;
 
@@ -658,7 +665,7 @@ export default function PlaceOrderScreen({ navigation }) {
 
 const MAP_H = height * 0.42;
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   topBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingBottom: 10,

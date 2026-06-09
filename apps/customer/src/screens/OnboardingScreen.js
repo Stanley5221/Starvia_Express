@@ -7,42 +7,45 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as storage from '../lib/storage';
-import { colors, radius } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius } from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
-const SLIDES = [
-  {
-    id: '1',
-    icon:     'rocket',
-    iconColor: colors.primary,
-    gradient: [colors.primary + '25', 'transparent'],
-    title:    'Fast & Reliable',
-    subtitle: 'Send anything, anywhere in the city. Our riders pick up in minutes and deliver on time, every time.',
-  },
-  {
-    id: '2',
-    icon:     'location',
-    iconColor: colors.accent,
-    gradient: [colors.accent + '20', 'transparent'],
-    title:    'Track in Real-Time',
-    subtitle: 'Watch your delivery move on the map live. Know exactly where your package is at every second.',
-  },
-  {
-    id: '3',
-    icon:     'shield-checkmark',
-    iconColor: colors.success,
-    gradient: [colors.success + '20', 'transparent'],
-    title:    'Safe & Insured',
-    subtitle: 'Every delivery is verified and insured. Rate your experience and help us serve you better.',
-  },
-];
-
 export default function OnboardingScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets   = useSafeAreaInsets();
   const flatRef  = useRef(null);
   const scrollX  = useRef(new Animated.Value(0)).current;
   const [index, setIndex] = useState(0);
+
+  const SLIDES = [
+    {
+      id: '1',
+      icon:     'rocket',
+      iconColor: colors.primary,
+      gradient: [colors.primary + '25', 'transparent'],
+      title:    'Fast & Reliable',
+      subtitle: 'Send anything, anywhere in the city. Our riders pick up in minutes and deliver on time, every time.',
+    },
+    {
+      id: '2',
+      icon:     'location',
+      iconColor: colors.accent,
+      gradient: [colors.accent + '20', 'transparent'],
+      title:    'Track in Real-Time',
+      subtitle: 'Watch your delivery move on the map live. Know exactly where your package is at every second.',
+    },
+    {
+      id: '3',
+      icon:     'shield-checkmark',
+      iconColor: colors.success,
+      gradient: [colors.success + '20', 'transparent'],
+      title:    'Safe & Insured',
+      subtitle: 'Every delivery is verified and insured. Rate your experience and help us serve you better.',
+    },
+  ];
 
   async function finish() {
     await storage.setItemAsync('onboarded', '1');
@@ -153,7 +156,7 @@ export default function OnboardingScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   skip: { position: 'absolute', top: 56, right: 24, zIndex: 10 },
   skipText: { color: colors.muted, fontSize: 14, fontWeight: '600' },

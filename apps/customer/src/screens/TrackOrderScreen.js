@@ -9,7 +9,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import api from '../lib/api';
 import { connectSocket } from '../lib/socket';
-import { colors, radius, shadow, STATUS_LABELS, STATUS_COLORS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow, STATUS_LABELS, STATUS_COLORS } from '../constants/theme';
 import { formatMoney } from '../constants/currency';
 import StatusBadge from '../components/StatusBadge';
 
@@ -27,6 +28,8 @@ function haversineKm(lat1, lng1, lat2, lng2) {
 
 // ── Live Map ─────────────────────────────────────────────────────────────────
 function TrackMap({ order, riderCoords, routeCoords, riderRouteCoords, style }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   if (Platform.OS === 'web') {
     return (
       <View style={[style, styles.mapFallback]}>
@@ -108,6 +111,8 @@ function TrackMap({ order, riderCoords, routeCoords, riderRouteCoords, style }) 
 
 // ── Star Rating ──────────────────────────────────────────────────────────────
 function StarRating({ rating, onChange }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.stars}>
       {[1, 2, 3, 4, 5].map(n => (
@@ -125,6 +130,8 @@ function StarRating({ rating, onChange }) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function TrackOrderScreen({ navigation, route }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { orderId } = route.params || {};
   const insets      = useSafeAreaInsets();
   const lastRiderPos = useRef({ lat: null, lng: null });
@@ -463,7 +470,7 @@ export default function TrackOrderScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   mapFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
   pin: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', ...shadow.md },
   riderPin: { alignItems: 'center', justifyContent: 'center' },

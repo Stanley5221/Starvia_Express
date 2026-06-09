@@ -1,46 +1,74 @@
-export const colors = {
-  // ── Backgrounds ──────────────────────────────────────────────────────────────
+export const darkColors = {
   bg:           '#0c0406',
   surface:      '#160810',
   card:         '#1e0c14',
   cardElevated: '#271019',
   overlay:      'rgba(0,0,0,0.65)',
 
-  // ── Brand ────────────────────────────────────────────────────────────────────
   primary:      '#8B053C',
   primaryDark:  '#6b0430',
   primaryLight: '#b5064f',
   accent:       '#F5A623',
   accentLight:  '#fbbf24',
 
-  // ── Status ───────────────────────────────────────────────────────────────────
   success:  '#10B981',
   warning:  '#F59E0B',
   danger:   '#EF4444',
   info:     '#3B82F6',
   purple:   '#7C3AED',
 
-  // ── Text ─────────────────────────────────────────────────────────────────────
   text:          '#F2E8EC',
   textSecondary: '#C4A0B0',
   muted:         '#7A5060',
   placeholder:   '#4A3040',
 
-  // ── UI ───────────────────────────────────────────────────────────────────────
   border:      'rgba(139,5,60,0.22)',
   borderLight: 'rgba(255,255,255,0.07)',
   white:       '#FFFFFF',
   black:       '#000000',
 };
 
+export const lightColors = {
+  bg:           '#FFF5F7',
+  surface:      '#FFFFFF',
+  card:         '#FFFFFF',
+  cardElevated: '#FFF0F4',
+  overlay:      'rgba(0,0,0,0.45)',
+
+  primary:      '#8B053C',
+  primaryDark:  '#6b0430',
+  primaryLight: '#b5064f',
+  accent:       '#F5A623',
+  accentLight:  '#fbbf24',
+
+  success:  '#10B981',
+  warning:  '#F59E0B',
+  danger:   '#EF4444',
+  info:     '#3B82F6',
+  purple:   '#7C3AED',
+
+  text:          '#1A0810',
+  textSecondary: '#4A1525',
+  muted:         '#9E6070',
+  placeholder:   '#C4A0B0',
+
+  border:      'rgba(139,5,60,0.18)',
+  borderLight: 'rgba(139,5,60,0.08)',
+  white:       '#FFFFFF',
+  black:       '#000000',
+};
+
+// Backward-compat alias
+export const colors = darkColors;
+
 export const STATUS_COLORS = {
-  PENDING:    colors.muted,
-  ACCEPTED:   colors.accent,
-  PICKED_UP:  colors.purple,
-  IN_TRANSIT: colors.info,
-  ARRIVED:    colors.warning,
-  DELIVERED:  colors.success,
-  CANCELLED:  colors.danger,
+  PENDING:    darkColors.muted,
+  ACCEPTED:   darkColors.accent,
+  PICKED_UP:  darkColors.purple,
+  IN_TRANSIT: darkColors.info,
+  ARRIVED:    darkColors.warning,
+  DELIVERED:  darkColors.success,
+  CANCELLED:  darkColors.danger,
 };
 
 export const STATUS_LABELS = {

@@ -7,18 +7,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, shadow, STATUS_COLORS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow, STATUS_COLORS } from '../constants/theme';
 import { formatMoney } from '../constants/currency';
 
-const STATUS_CONFIG = {
-  PENDING:      { color: colors.warning,  icon: 'time-outline',           text: 'Application pending — upload your documents to get verified.' },
-  UNDER_REVIEW: { color: colors.info,     icon: 'search-outline',         text: 'Documents under review. This takes 1–2 business days.' },
-  APPROVED:     { color: colors.success,  icon: 'checkmark-circle-outline', text: 'Account approved! You have access to business pricing.' },
-  REJECTED:     { color: colors.danger,   icon: 'close-circle-outline',   text: 'Verification rejected. Please re-upload your documents.' },
-  SUSPENDED:    { color: colors.danger,   icon: 'ban-outline',            text: 'Account suspended. Contact support for assistance.' },
-};
-
-function StatCard({ icon, label, value, color }) {
+function StatCard({ icon, label, value, color, colors, styles }) {
   return (
     <View style={styles.statCard}>
       <View style={[styles.statIcon, { backgroundColor: (color ?? colors.primary) + '20' }]}>
@@ -31,11 +24,21 @@ function StatCard({ icon, label, value, color }) {
 }
 
 export default function BusinessDashboardScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const { user, refreshUser } = useAuth();
   const [data, setData]           = useState(null);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const STATUS_CONFIG = {
+    PENDING:      { color: colors.warning,  icon: 'time-outline',             text: 'Application pending — upload your documents to get verified.' },
+    UNDER_REVIEW: { color: colors.info,     icon: 'search-outline',           text: 'Documents under review. This takes 1–2 business days.' },
+    APPROVED:     { color: colors.success,  icon: 'checkmark-circle-outline', text: 'Account approved! You have access to business pricing.' },
+    REJECTED:     { color: colors.danger,   icon: 'close-circle-outline',     text: 'Verification rejected. Please re-upload your documents.' },
+    SUSPENDED:    { color: colors.danger,   icon: 'ban-outline',              text: 'Account suspended. Contact support for assistance.' },
+  };
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -96,10 +99,10 @@ export default function BusinessDashboardScreen({ navigation }) {
 
         {/* Stats */}
         <View style={styles.statsGrid}>
-          <StatCard icon="cube-outline"      label="Total Deliveries"   value={stats.totalDeliveries ?? 0} color={colors.primary} />
-          <StatCard icon="calendar-outline"  label="This Month"         value={stats.monthlyDeliveries ?? 0} color={colors.info} />
-          <StatCard icon="wallet-outline"    label="Total Spend"        value={formatMoney(stats.totalSpend ?? 0)} color={colors.accent} />
-          <StatCard icon="time-outline"      label="Active Orders"      value={stats.pendingOrders ?? 0} color={colors.warning} />
+          <StatCard icon="cube-outline"      label="Total Deliveries"   value={stats.totalDeliveries ?? 0} color={colors.primary} colors={colors} styles={styles} />
+          <StatCard icon="calendar-outline"  label="This Month"         value={stats.monthlyDeliveries ?? 0} color={colors.info} colors={colors} styles={styles} />
+          <StatCard icon="wallet-outline"    label="Total Spend"        value={formatMoney(stats.totalSpend ?? 0)} color={colors.accent} colors={colors} styles={styles} />
+          <StatCard icon="time-outline"      label="Active Orders"      value={stats.pendingOrders ?? 0} color={colors.warning} colors={colors} styles={styles} />
         </View>
 
         {/* Quick actions */}
@@ -179,7 +182,7 @@ export default function BusinessDashboardScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12,

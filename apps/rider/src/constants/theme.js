@@ -1,4 +1,4 @@
-export const colors = {
+export const darkColors = {
   bg:           '#0c0406',
   bgDark:       '#080204',
   card:         '#160810',
@@ -24,6 +24,36 @@ export const colors = {
   border:      'rgba(139,5,60,0.22)',
   borderLight: 'rgba(255,255,255,0.08)',
 };
+
+export const lightColors = {
+  bg:           '#FFF5F7',
+  bgDark:       '#FCE8EF',
+  card:         '#FFFFFF',
+  surface:      '#FFF0F4',
+
+  primary:      '#8B053C',
+  primaryDark:  '#6b0430',
+  primaryLight: '#b5064f',
+
+  accent:  '#F5A623',
+  amber:   '#F5A623',
+
+  text:          '#1A0810',
+  textSecondary: '#4A1525',
+  muted:         '#9E6070',
+  placeholder:   '#C4A0B0',
+  white:         '#FFFFFF',
+
+  success: '#10B981',
+  danger:  '#EF4444',
+  warning: '#F59E0B',
+
+  border:      'rgba(139,5,60,0.18)',
+  borderLight: 'rgba(139,5,60,0.08)',
+};
+
+// Backward-compat alias — screens that haven't migrated yet still get dark theme
+export const colors = darkColors;
 
 export const radius = {
   sm: 8,

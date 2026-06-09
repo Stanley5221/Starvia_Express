@@ -9,10 +9,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 import { formatMoney } from '../constants/currency';
 
-function MenuItem({ icon, label, value, onPress, danger, rightEl }) {
+function MenuItem({ icon, label, value, onPress, danger, rightEl, colors, styles }) {
   return (
     <TouchableOpacity onPress={onPress} style={styles.menuItem} activeOpacity={0.7}>
       <View style={[styles.menuIcon, danger && { backgroundColor: colors.danger + '18' }]}>
@@ -27,7 +28,7 @@ function MenuItem({ icon, label, value, onPress, danger, rightEl }) {
   );
 }
 
-function Section({ title, children }) {
+function Section({ title, children, styles }) {
   return (
     <View style={styles.section}>
       {title && <Text style={styles.sectionTitle}>{title}</Text>}
@@ -37,6 +38,8 @@ function Section({ title, children }) {
 }
 
 export default function ProfileScreen({ navigation }) {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = createStyles(colors);
   const { user, updateProfile, logout, refreshUser, isBusiness } = useAuth();
   const insets = useSafeAreaInsets();
   const [editMode, setEditMode] = useState(false);
@@ -125,7 +128,7 @@ export default function ProfileScreen({ navigation }) {
 
         <View style={styles.body}>
           {/* ── Edit Profile ── */}
-          <Section title="Account">
+          <Section title="Account" styles={styles}>
             {editMode ? (
               <View style={styles.editForm}>
                 <View style={styles.fieldWrap}>
@@ -163,85 +166,114 @@ export default function ProfileScreen({ navigation }) {
               </View>
             ) : (
               <>
-                <MenuItem icon="person-outline"  label="Full Name" value={user?.name}  onPress={() => setEditMode(true)} />
-                <MenuItem icon="mail-outline"    label="Email"     value={user?.email} onPress={() => {}} />
-                <MenuItem icon="call-outline"    label="Phone"     value={user?.phone || 'Not set'} onPress={() => setEditMode(true)} />
+                <MenuItem icon="person-outline"  label="Full Name" value={user?.name}  onPress={() => setEditMode(true)} colors={colors} styles={styles} />
+                <MenuItem icon="mail-outline"    label="Email"     value={user?.email} onPress={() => {}} colors={colors} styles={styles} />
+                <MenuItem icon="call-outline"    label="Phone"     value={user?.phone || 'Not set'} onPress={() => setEditMode(true)} colors={colors} styles={styles} />
               </>
             )}
           </Section>
 
           {/* ── Security ── */}
-          <Section title="Security">
+          <Section title="Security" styles={styles}>
             <MenuItem
               icon="lock-closed-outline"
               label="Change Password"
               onPress={() => navigation.navigate('ChangePassword')}
+              colors={colors}
+              styles={styles}
             />
             <MenuItem
               icon="location-outline"
               label="Saved Addresses"
               onPress={() => navigation.navigate('SavedAddresses')}
+              colors={colors}
+              styles={styles}
             />
           </Section>
 
           {/* ── Business ── */}
           {isBusiness && (
-            <Section title="Business Account">
+            <Section title="Business Account" styles={styles}>
               <MenuItem
                 icon="business-outline"
                 label="Business Dashboard"
                 onPress={() => navigation.navigate('BusinessDashboard')}
+                colors={colors}
+                styles={styles}
               />
               <MenuItem
                 icon="document-text-outline"
                 label="KYC Documents"
                 onPress={() => navigation.navigate('BusinessDocuments')}
+                colors={colors}
+                styles={styles}
               />
               <MenuItem
                 icon="briefcase-outline"
                 label="Business Profile"
                 onPress={() => navigation.navigate('BusinessProfile')}
+                colors={colors}
+                styles={styles}
               />
               <MenuItem
                 icon="receipt-outline"
                 label="Business Orders"
                 onPress={() => navigation.navigate('BusinessOrders')}
+                colors={colors}
+                styles={styles}
               />
             </Section>
           )}
 
           {/* ── Preferences ── */}
-          <Section title="Preferences">
+          <Section title="Preferences" styles={styles}>
+            <TouchableOpacity onPress={toggleTheme} style={styles.menuItem}>
+              <View style={[styles.menuIcon, { backgroundColor: colors.accent + '18' }]}>
+                <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={18} color={colors.accent} />
+              </View>
+              <Text style={styles.menuLabel}>{isDark ? 'Light Mode' : 'Dark Mode'}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            </TouchableOpacity>
             <MenuItem
               icon="notifications-outline"
               label="Notifications"
               onPress={() => navigation.navigate('Notifications')}
+              colors={colors}
+              styles={styles}
             />
             <MenuItem
               icon="shield-checkmark-outline"
               label="Privacy & Security"
               onPress={() => {}}
+              colors={colors}
+              styles={styles}
             />
             <MenuItem
               icon="help-circle-outline"
               label="Help & Support"
               onPress={() => {}}
+              colors={colors}
+              styles={styles}
             />
             <MenuItem
               icon="star-outline"
               label="Rate the App"
               onPress={() => {}}
+              colors={colors}
+              styles={styles}
             />
           </Section>
 
           {/* ── Danger zone ── */}
-          <Section>
+          <Section styles={styles}>
             <MenuItem
               icon="log-out-outline"
               label="Sign Out"
               onPress={handleLogout}
               danger
               rightEl={<Ionicons name="arrow-forward" size={16} color={colors.danger} />}
+              colors={colors}
+              styles={styles}
             />
           </Section>
 
@@ -252,7 +284,7 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: { alignItems: 'center', paddingBottom: 28, paddingHorizontal: 24 },
   headerTitle: { alignSelf: 'flex-start', fontSize: 22, fontWeight: '900', color: colors.text, marginBottom: 20 },
   avatarWrap: { position: 'relative', marginBottom: 14 },
@@ -280,7 +312,7 @@ const styles = StyleSheet.create({
 
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.borderLight },
   menuIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.accent + '18', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  menuLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
+  menuLabel: { fontSize: 14, fontWeight: '600', color: colors.text, flex: 1 },
   menuValue: { fontSize: 12, color: colors.muted, marginTop: 2 },
 
   toggleOn: { backgroundColor: colors.success + '25', borderRadius: 99, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderColor: colors.success + '40' },

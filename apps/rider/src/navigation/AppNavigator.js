@@ -5,16 +5,16 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { ActiveOrderProvider } from '../context/ActiveOrderContext';
-import { colors } from '../constants/theme';
-import LoginScreen          from '../screens/LoginScreen';
+import LoginScreen            from '../screens/LoginScreen';
 import AwaitingApprovalScreen from '../screens/AwaitingApprovalScreen';
-import ChangePasswordScreen from '../screens/ChangePasswordScreen';
-import HomeScreen           from '../screens/HomeScreen';
-import DeliveryScreen       from '../screens/DeliveryScreen';
-import EarningsScreen       from '../screens/EarningsScreen';
-import HistoryScreen        from '../screens/HistoryScreen';
-import ProfileScreen        from '../screens/ProfileScreen';
+import ChangePasswordScreen   from '../screens/ChangePasswordScreen';
+import HomeScreen             from '../screens/HomeScreen';
+import DeliveryScreen         from '../screens/DeliveryScreen';
+import EarningsScreen         from '../screens/EarningsScreen';
+import HistoryScreen          from '../screens/HistoryScreen';
+import ProfileScreen          from '../screens/ProfileScreen';
 
 const Stack = createStackNavigator();
 const Tab   = createBottomTabNavigator();
@@ -29,6 +29,7 @@ const TAB_ICONS = {
 
 function MainTabs() {
   const insets    = useSafeAreaInsets();
+  const { colors } = useTheme();
   const bottomPad = Math.max(insets.bottom, Platform.OS === 'web' ? 28 : 8);
 
   return (
@@ -63,6 +64,7 @@ function MainTabs() {
 
 export default function AppNavigator() {
   const { user, loading, isApproved, rider, mustChangePassword } = useAuth();
+  const { colors } = useTheme();
 
   if (loading) {
     return (

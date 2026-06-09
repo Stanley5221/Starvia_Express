@@ -7,7 +7,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 import { formatGHS, formatGHSFull } from '../constants/currency';
 
 const TABS = [
@@ -17,6 +18,8 @@ const TABS = [
 ];
 
 export default function EarningsScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [period, setPeriod]       = useState('today');
   const [data, setData]           = useState(null);
@@ -155,7 +158,7 @@ export default function EarningsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 20 },
   pageTitle: { fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 16 },
 

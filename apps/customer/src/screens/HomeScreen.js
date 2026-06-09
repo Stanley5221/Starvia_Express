@@ -7,9 +7,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { connectSocket } from '../lib/socket';
 import api from '../lib/api';
-import { colors, radius, shadow } from '../constants/theme';
+import { radius, shadow } from '../constants/theme';
 import { formatMoney, formatMoneyCompact } from '../constants/currency';
 import OrderCard from '../components/OrderCard';
 import StatusBadge from '../components/StatusBadge';
@@ -24,6 +25,8 @@ function greeting() {
 }
 
 function ActiveOrderBanner({ order, onTrack }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -59,6 +62,8 @@ function ActiveOrderBanner({ order, onTrack }) {
 }
 
 function StatCard({ icon, iconColor, label, value }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.statCard}>
       <View style={[styles.statIcon, { backgroundColor: iconColor + '18' }]}>
@@ -73,6 +78,8 @@ function StatCard({ icon, iconColor, label, value }) {
 const ACTIVE_STATUSES = ['PENDING', 'ACCEPTED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED'];
 
 export default function HomeScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { user } = useAuth();
   const insets   = useSafeAreaInsets();
   const [orders, setOrders]       = useState([]);
@@ -216,7 +223,7 @@ export default function HomeScreen({ navigation }) {
 
 const STAT_W = (width - 48 - 16) / 3;
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 24 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   greetText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },

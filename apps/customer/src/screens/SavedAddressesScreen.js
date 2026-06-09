@@ -6,12 +6,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 
 const LABEL_ICONS = { home: 'home', work: 'briefcase', other: 'location' };
 const LABELS = ['home', 'work', 'other'];
 
 export default function SavedAddressesScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -177,7 +180,7 @@ export default function SavedAddressesScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 16, paddingBottom: 14,

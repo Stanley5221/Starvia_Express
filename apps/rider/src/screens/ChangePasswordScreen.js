@@ -10,10 +10,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import api from '../lib/api';
-import { colors } from '../constants/theme';
 
 export default function ChangePasswordScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { user, logout, markPasswordChanged } = useAuth();
   const [current, setCurrent]   = useState('');
   const [next, setNext]         = useState('');
@@ -109,7 +111,7 @@ export default function ChangePasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: colors.bg,

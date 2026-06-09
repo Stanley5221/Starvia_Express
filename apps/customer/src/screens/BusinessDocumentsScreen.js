@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../lib/api';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 
 const DOCUMENT_TYPES = [
   { id: 'GHANA_CARD_FRONT',       label: 'Ghana Card – Front',                   required: true  },
@@ -17,18 +18,20 @@ const DOCUMENT_TYPES = [
   { id: 'BUSINESS_PERMIT',        label: 'Business Operating Permit',            required: false },
 ];
 
-const STATUS_CONFIG = {
-  PENDING:  { color: colors.warning, icon: 'time-outline',             label: 'Pending Review' },
-  APPROVED: { color: colors.success, icon: 'checkmark-circle-outline', label: 'Approved' },
-  REJECTED: { color: colors.danger,  icon: 'close-circle-outline',     label: 'Rejected' },
-};
-
 export default function BusinessDocumentsScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [documents, setDocuments]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading]   = useState({});
+
+  const STATUS_CONFIG = {
+    PENDING:  { color: colors.warning, icon: 'time-outline',             label: 'Pending Review' },
+    APPROVED: { color: colors.success, icon: 'checkmark-circle-outline', label: 'Approved' },
+    REJECTED: { color: colors.danger,  icon: 'close-circle-outline',     label: 'Rejected' },
+  };
 
   const fetchDocuments = useCallback(async () => {
     try {
@@ -182,7 +185,7 @@ export default function BusinessDocumentsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 16, paddingBottom: 14,

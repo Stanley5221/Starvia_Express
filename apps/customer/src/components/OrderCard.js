@@ -3,11 +3,14 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 import { formatMoney } from '../constants/currency';
 import StatusBadge from './StatusBadge';
 
 export default function OrderCard({ order, onPress }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const scale = useRef(new Animated.Value(1)).current;
 
   const pressIn  = () => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, friction: 8 }).start();
@@ -69,7 +72,7 @@ export default function OrderCard({ order, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',

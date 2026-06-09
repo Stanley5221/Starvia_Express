@@ -7,9 +7,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { colors, radius, shadow } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { radius, shadow } from '../constants/theme';
 
 export default function LoginScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { login }  = useAuth();
   const insets     = useSafeAreaInsets();
   const [email, setEmail]       = useState('');
@@ -160,7 +163,7 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 24 },
 
   backBtn: { marginBottom: 8 },
