@@ -13,7 +13,7 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "REPLACE_WITH_YOUR_RENDER_URL"
+        "EXPO_PUBLIC_API_URL": "https://starvia-express.onrender.com"
       }
     },
     "production": {
