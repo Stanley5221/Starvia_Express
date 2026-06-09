@@ -10,9 +10,9 @@ function normalizeApiBase(url) {
 
 /** Read env without import.meta (Expo/Hermes web cannot parse it). */
 function env(key) {
-  if (typeof process !== 'undefined' && process.env?.[key]) {
-    return process.env[key];
-  }
+  // __viteEnv is injected as a static object by vite.config.js define — dynamic access works
+  if (typeof __viteEnv !== 'undefined' && __viteEnv[key]) return __viteEnv[key];
+  if (typeof process !== 'undefined' && process.env?.[key]) return process.env[key];
   return undefined;
 }
 

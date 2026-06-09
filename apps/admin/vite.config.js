@@ -11,8 +11,10 @@ export default defineConfig(({ mode }) => {
   return {
   plugins: [react()],
   define: {
-    'process.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL || ''),
-    'process.env.VITE_SOCKET_URL': JSON.stringify(env.VITE_SOCKET_URL || ''),
+    __viteEnv: JSON.stringify({
+      VITE_API_URL: env.VITE_API_URL || '',
+      VITE_SOCKET_URL: env.VITE_SOCKET_URL || '',
+    }),
   },
   resolve: {
     alias: {
