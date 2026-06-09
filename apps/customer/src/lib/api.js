@@ -10,7 +10,7 @@ function normalizeBase(url) {
   return `${trimmed}/api/v1`;
 }
 
-const api = axios.create({ baseURL: normalizeBase(BASE), timeout: 10000 });
+const api = axios.create({ baseURL: normalizeBase(BASE), timeout: 40000 });
 
 api.interceptors.request.use(async (config) => {
   const token = await storage.getItemAsync('cust_token');
