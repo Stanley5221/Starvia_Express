@@ -51,27 +51,46 @@ export function ActiveOrderProvider({ children }) {
   useEffect(() => {
     if (!rider?.id) return undefined;
     let mounted = true;
+    let savedSocket = null;
+
+    const joinRoom = () => {
+      savedSocket?.emit('rider:join', { riderId: rider.id });
+    };
+
+    const handleNew = (offer) => {
+      if (mounted) setIncomingOffer({ ...offer, receivedAt: Date.now() });
+    };
+
+    const handleStatusChanged = ({ orderId, status }) => {
+      if (!mounted) return;
+      setActiveOrder((prev) => (prev?.id === orderId ? { ...prev, status } : prev));
+      if (status === 'DELIVERED' || status === 'CANCELLED') {
+        setActiveOrder(null);
+        setIncomingOffer(null);
+      }
+    };
 
     (async () => {
-      const socket = await connectSocket();
-      socket.emit('rider:join', { riderId: rider.id });
-
-      socket.on('order:new', (offer) => {
-        if (mounted) setIncomingOffer({ ...offer, receivedAt: Date.now() });
-      });
-
-      socket.on('order:status_changed', ({ orderId, status }) => {
+      try {
+        const socket = await connectSocket();
+        savedSocket = socket;
         if (!mounted) return;
-        setActiveOrder((prev) => (prev?.id === orderId ? { ...prev, status } : prev));
-        if (status === 'DELIVERED' || status === 'CANCELLED') {
-          setActiveOrder(null);
-          setIncomingOffer(null);
-        }
-      });
+
+        joinRoom();
+        // Re-join room on every reconnect (Render free tier sleeps; network drops)
+        socket.on('connect', joinRoom);
+        socket.on('order:new', handleNew);
+        socket.on('order:status_changed', handleStatusChanged);
+      } catch (_) {}
     })();
 
     return () => {
       mounted = false;
+      if (savedSocket) {
+        savedSocket.off('connect', joinRoom);
+        savedSocket.off('order:new', handleNew);
+        savedSocket.off('order:status_changed', handleStatusChanged);
+      }
     };
   }, [rider?.id]);
 

@@ -7,7 +7,8 @@ const SOCKET_URL = BASE.replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
 let socket = null;
 
 export async function connectSocket() {
-  if (socket?.connected) return socket;
+  // Return existing socket (even if reconnecting) to avoid duplicate instances
+  if (socket) return socket;
   const token = await storage.getItemAsync('cust_token');
   socket = io(SOCKET_URL, {
     auth: { token },

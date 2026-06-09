@@ -105,6 +105,16 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Customer joins their own room to receive order status updates
+  socket.on('customer:join', () => {
+    if (role !== 'CUSTOMER') {
+      socket.emit('error', 'Forbidden');
+      return;
+    }
+    socket.join(`customer:${userId}`);
+    console.log(`[WS] customer ${userId} joined`);
+  });
+
   // Admin joins global admin room — ADMIN role required
   socket.on('admin:join', () => {
     if (role !== 'ADMIN') {

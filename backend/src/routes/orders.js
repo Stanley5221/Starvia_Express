@@ -289,6 +289,7 @@ router.patch('/:id/status', authenticate, authorize('RIDER'), async (req, res, n
     io.to(`order:${order.id}`).emit('order:status_changed', { orderId: order.id, status, timestamp });
     io.to('admin').emit('order:status_changed', { orderId: order.id, status, timestamp });
     io.to(`rider:${rider.id}`).emit('order:status_changed', { orderId: order.id, status, timestamp });
+    io.to(`customer:${order.customerId}`).emit('order:status_changed', { orderId: order.id, status, timestamp });
 
     const statusMessages = {
       ACCEPTED: 'Your order has been accepted by a rider',
@@ -404,6 +405,9 @@ router.patch('/:id/cancel', authenticate, authorize('CUSTOMER'), async (req, res
       orderId: order.id, status: 'CANCELLED', timestamp,
     });
     io.to('admin').emit('order:status_changed', {
+      orderId: order.id, status: 'CANCELLED', timestamp,
+    });
+    io.to(`customer:${order.customerId}`).emit('order:status_changed', {
       orderId: order.id, status: 'CANCELLED', timestamp,
     });
 

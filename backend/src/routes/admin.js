@@ -152,16 +152,20 @@ router.patch('/orders/:id/assign', ...adminOnly, async (req, res, next) => {
     });
 
     const timestamp = new Date().toISOString();
-    io.to(`order:${order.id}`).emit('order:assigned', {
-      orderId: order.id,
-      rider: {
-        name: rider.fullName,
-        phone: rider.phone,
-        motorPlate: rider.motorPlate,
-        photo: rider.profilePhoto,
-      },
-    });
+    const riderPayload = {
+      name: rider.fullName,
+      phone: rider.phone,
+      motorPlate: rider.motorPlate,
+      photo: rider.profilePhoto,
+    };
+    io.to(`order:${order.id}`).emit('order:assigned', { orderId: order.id, rider: riderPayload });
+    io.to(`customer:${order.customerId}`).emit('order:assigned', { orderId: order.id, rider: riderPayload });
     io.to(`order:${order.id}`).emit('order:status_changed', {
+      orderId: order.id,
+      status: 'ACCEPTED',
+      timestamp,
+    });
+    io.to(`customer:${order.customerId}`).emit('order:status_changed', {
       orderId: order.id,
       status: 'ACCEPTED',
       timestamp,
@@ -192,6 +196,7 @@ router.patch('/orders/:id/cancel', ...adminOnly, async (req, res, next) => {
     const timestamp = new Date().toISOString();
     io.to(`order:${order.id}`).emit('order:status_changed', { orderId: order.id, status: 'CANCELLED', timestamp });
     io.to('admin').emit('order:status_changed', { orderId: order.id, status: 'CANCELLED', timestamp });
+    io.to(`customer:${order.customerId}`).emit('order:status_changed', { orderId: order.id, status: 'CANCELLED', timestamp });
     if (order.riderId) {
       const rider = await prisma.rider.findUnique({ where: { id: order.riderId } });
       if (rider) {
@@ -716,6 +721,57 @@ router.post('/riders', ...adminOnly, async (req, res, next) => {
       temporaryPassword: tempPassword,
       note: 'The rider will be prompted to change this password on first login.',
     });
+  } catch (err) { next(err); }
+});
+
+// ── Admin account management ──────────────────────────────────────────────────
+
+router.get('/admins', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true, name: true, email: true, createdAt: true, isSuspended: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    res.json(admins);
+  } catch (err) { next(err); }
+});
+
+router.post('/admins', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const { name, email, password } = req.body;
+    if (!name?.trim() || !email?.trim() || !password?.trim()) {
+      return res.status(400).json({ error: 'name, email, and password are required' });
+    }
+    const existing = await prisma.user.findUnique({ where: { email: email.trim() } });
+    if (existing) return res.status(409).json({ error: 'Email already registered' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const admin = await prisma.user.create({
+      data: { name: name.trim(), email: email.trim(), passwordHash, role: 'ADMIN' },
+      select: { id: true, name: true, email: true, createdAt: true },
+    });
+    res.status(201).json(admin);
+  } catch (err) { next(err); }
+});
+
+router.delete('/admins/:id', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ error: 'You cannot remove your own admin account' });
+    }
+    const target = await prisma.user.findFirst({ where: { id: req.params.id, role: 'ADMIN' } });
+    if (!target) return res.status(404).json({ error: 'Admin not found' });
+
+    const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+    if (adminCount <= 1) {
+      return res.status(400).json({ error: 'Cannot remove the last admin account' });
+    }
+    await prisma.user.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
   } catch (err) { next(err); }
 });
 

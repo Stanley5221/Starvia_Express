@@ -263,17 +263,17 @@ router.post('/orders/:id/accept', authenticate, authorize('RIDER'), async (req, 
     const order = await prisma.order.findUnique({ where: { id: req.params.id } });
     const timestamp = new Date().toISOString();
 
-    io.to(`order:${order.id}`).emit('order:assigned', {
-      orderId: order.id,
-      rider: {
-        name:       rider.fullName,
-        phone:      rider.phone,
-        motorPlate: rider.motorPlate,
-        photo:      rider.profilePhoto,
-      },
-    });
+    const riderPayload = {
+      name:       rider.fullName,
+      phone:      rider.phone,
+      motorPlate: rider.motorPlate,
+      photo:      rider.profilePhoto,
+    };
+    io.to(`order:${order.id}`).emit('order:assigned', { orderId: order.id, rider: riderPayload });
+    io.to(`customer:${order.customerId}`).emit('order:assigned', { orderId: order.id, rider: riderPayload });
     io.to(`order:${order.id}`).emit('order:status_changed', { orderId: order.id, status: 'ACCEPTED', timestamp });
     io.to('admin').emit('order:status_changed', { orderId: order.id, status: 'ACCEPTED', timestamp });
+    io.to(`customer:${order.customerId}`).emit('order:status_changed', { orderId: order.id, status: 'ACCEPTED', timestamp });
 
     await createNotification(prisma, {
       userId:  order.customerId,

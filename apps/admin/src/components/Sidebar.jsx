@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Package, Bike, Users, DollarSign, LogOut, Map, BarChart3, Building, Radio } from 'lucide-react'
+import { LayoutDashboard, Package, Bike, Users, DollarSign, LogOut, Map, BarChart3, Building, Radio, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 import './Sidebar.css'
 
@@ -17,7 +17,8 @@ export default function Sidebar() {
     { to: '/businesses', icon: <Building size={20}/>,        label: 'Businesses' },
     { to: '/analytics',  icon: <BarChart3 size={20}/>,       label: 'Analytics' },
     { to: '/pricing',    icon: <DollarSign size={20}/>,      label: 'Pricing' },
-    { to: '/dispatch',   icon: <Radio size={20}/>,           label: 'Dispatch Zone' },
+    { to: '/dispatch',   icon: <Radio size={20}/>,            label: 'Dispatch Zone' },
+    { to: '/admins',     icon: <ShieldCheck size={20}/>,      label: 'Admins' },
   ]
 
   return (

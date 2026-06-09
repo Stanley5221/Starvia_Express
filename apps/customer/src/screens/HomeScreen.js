@@ -104,10 +104,18 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     load();
+    let _socket = null;
     connectSocket().then(socket => {
+      _socket = socket;
       socket.on('order:status_changed', load);
-      return () => socket.off('order:status_changed', load);
+      socket.on('order:assigned', load);
     }).catch(() => {});
+    return () => {
+      if (_socket) {
+        _socket.off('order:status_changed', load);
+        _socket.off('order:assigned', load);
+      }
+    };
   }, [load]);
 
   async function onRefresh() {

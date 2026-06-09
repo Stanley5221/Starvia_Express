@@ -3,6 +3,21 @@ import * as storage from '../lib/storage';
 import api from '../lib/api';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 
+// Persistent reconnect handler reference so it can be properly removed on logout
+let _customerJoinHandler = null;
+
+async function setupCustomerSocket() {
+  try {
+    const socket = await connectSocket();
+    // Remove any previous handler to avoid duplicates
+    if (_customerJoinHandler) socket.off('connect', _customerJoinHandler);
+    _customerJoinHandler = () => socket.emit('customer:join');
+    socket.on('connect', _customerJoinHandler);
+    // Emit immediately if already connected, otherwise wait for connect event
+    if (socket.connected) socket.emit('customer:join');
+  } catch (_) {}
+}
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -19,7 +34,7 @@ export function AuthProvider({ children }) {
         const parsed = JSON.parse(raw);
         setUser(parsed);
         api.defaults.headers.Authorization = `Bearer ${token}`;
-        connectSocket().catch(() => {});
+        setupCustomerSocket();
       }
     } catch (_) {
     } finally {
@@ -33,7 +48,7 @@ export function AuthProvider({ children }) {
     await storage.setItemAsync('cust_token', data.token);
     await storage.setItemAsync('cust_user', JSON.stringify(data.user));
     setUser(data.user);
-    await connectSocket();
+    await setupCustomerSocket();
     return data.user;
   }
 
@@ -42,11 +57,12 @@ export function AuthProvider({ children }) {
     await storage.setItemAsync('cust_token', data.token);
     await storage.setItemAsync('cust_user', JSON.stringify(data.user));
     setUser(data.user);
-    await connectSocket();
+    await setupCustomerSocket();
     return data.user;
   }
 
   async function logout() {
+    _customerJoinHandler = null;
     disconnectSocket();
     await storage.deleteItemAsync('cust_token');
     await storage.deleteItemAsync('cust_user');

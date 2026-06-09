@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../lib/api';
+import { connectSocket } from '../lib/socket';
 import { useTheme } from '../context/ThemeContext';
 import { radius } from '../constants/theme';
 import OrderCard from '../components/OrderCard';
@@ -38,7 +39,21 @@ export default function OrdersScreen({ navigation }) {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    let _socket = null;
+    connectSocket().then(socket => {
+      _socket = socket;
+      socket.on('order:status_changed', load);
+      socket.on('order:assigned', load);
+    }).catch(() => {});
+    return () => {
+      if (_socket) {
+        _socket.off('order:status_changed', load);
+        _socket.off('order:assigned', load);
+      }
+    };
+  }, [load]);
 
   const filtered = orders.filter(o => {
     if (filter === 'all')    return true;

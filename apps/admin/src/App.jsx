@@ -12,6 +12,7 @@ import Analytics from './pages/Analytics'
 import Businesses from './pages/Businesses'
 import BusinessDetail from './pages/BusinessDetail'
 import DispatchSettings from './pages/DispatchSettings'
+import Admins from './pages/Admins'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
@@ -35,6 +36,7 @@ function AdminLayout() {
           <Route path="/analytics"  element={<Analytics />} />
           <Route path="/pricing"    element={<Pricing />} />
           <Route path="/dispatch"   element={<DispatchSettings />} />
+          <Route path="/admins"     element={<Admins />} />
           <Route path="*"           element={<Navigate to="/" replace />} />
         </Routes>
       </main>
