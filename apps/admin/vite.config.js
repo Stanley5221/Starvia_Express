@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
     alias: {
       '@shared': sharedDir,
       'socket.io-client': path.resolve(dir, 'node_modules/socket.io-client'),
+      'axios': path.resolve(dir, 'node_modules/axios'),
     },
   },
   optimizeDeps: {
