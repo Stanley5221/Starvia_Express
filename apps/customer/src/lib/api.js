@@ -10,14 +10,38 @@ function normalizeBase(url) {
   return `${trimmed}/api/v1`;
 }
 
-const api = axios.create({ baseURL: normalizeBase(BASE), timeout: 40000 });
+const BASE_URL = normalizeBase(BASE);
+console.log('[API] EXPO_PUBLIC_API_URL =', BASE);
+console.log('[API] baseURL =', BASE_URL);
+
+const api = axios.create({ baseURL: BASE_URL, timeout: 40000 });
 
 api.interceptors.request.use(async (config) => {
   try {
     const token = await storage.getItemAsync('cust_token');
     if (token) config.headers.Authorization = `Bearer ${token}`;
-  } catch (_) {}
+  } catch (e) {
+    console.warn('[API] storage read error:', e?.message);
+  }
+  const fullUrl = (config.baseURL || '') + (config.url || '');
+  console.log('[API] -->', config.method?.toUpperCase(), fullUrl);
   return config;
 });
+
+api.interceptors.response.use(
+  (res) => {
+    console.log('[API] <--', res.status, res.config?.url);
+    return res;
+  },
+  (err) => {
+    console.error('[API] ERROR', err?.message);
+    console.error('[API] code:', err?.code);
+    console.error('[API] url:', err?.config?.url);
+    console.error('[API] baseURL:', err?.config?.baseURL);
+    console.error('[API] response status:', err?.response?.status);
+    console.error('[API] response data:', JSON.stringify(err?.response?.data));
+    return Promise.reject(err);
+  }
+);
 
 export default api;
