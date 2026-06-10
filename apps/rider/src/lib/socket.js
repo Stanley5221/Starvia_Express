@@ -1,7 +1,9 @@
 import { io } from 'socket.io-client';
 import * as storage from './storage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = __DEV__
+  ? (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000')
+  : 'https://starvia-express.onrender.com';
 
 let socket = null;
 

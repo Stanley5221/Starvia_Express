@@ -1,7 +1,10 @@
 import axios from 'axios';
 import * as storage from './storage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+// __DEV__ is false in EAS preview/production builds, true in `expo start`
+const API_URL = __DEV__
+  ? (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000')
+  : 'https://starvia-express.onrender.com';
 
 function normalizeBase(url) {
   const trimmed = url.replace(/\/+$/, '');
