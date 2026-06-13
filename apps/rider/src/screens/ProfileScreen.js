@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
   Image, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView,
@@ -19,7 +19,7 @@ function licenceBadge(expiry, colors) {
   const days = Math.ceil((new Date(expiry) - new Date()) / (1000 * 60 * 60 * 24));
   if (days < 0)   return { text: 'EXPIRED',               color: colors.danger };
   if (days <= 30) return { text: `Expires in ${days}d`,   color: colors.warning };
-  return            { text: `Valid · ${new Date(expiry).toLocaleDateString('en-GH')}`, color: colors.success };
+  return            { text: `Valid Â· ${new Date(expiry).toLocaleDateString('en-GH')}`, color: colors.success };
 }
 
 function toDateInput(iso) {
@@ -127,10 +127,10 @@ export default function ProfileScreen() {
 
   return (
     <>
-      {/* ── Edit Profile Modal ── */}
+      {/* â”€â”€ Edit Profile Modal â”€â”€ */}
       <Modal visible={editVisible} animationType="slide" onRequestClose={() => setEditVisible(false)}>
         <SafeAreaView style={styles.modalSafe}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setEditVisible(false)} style={styles.modalClose}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -160,10 +160,10 @@ export default function ProfileScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* ── Change Password Modal ── */}
+      {/* â”€â”€ Change Password Modal â”€â”€ */}
       <Modal visible={pwVisible} animationType="slide" onRequestClose={() => setPwVisible(false)}>
         <SafeAreaView style={styles.modalSafe}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={() => setPwVisible(false)} style={styles.modalClose}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -194,7 +194,7 @@ export default function ProfileScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* ── Main Profile ── */}
+      {/* â”€â”€ Main Profile â”€â”€ */}
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.bg }}
         contentContainerStyle={{ paddingBottom: 56 }}
@@ -239,7 +239,7 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Deliveries</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statVal}>{p.averageRating ? p.averageRating.toFixed(1) : '—'}</Text>
+            <Text style={styles.statVal}>{p.averageRating ? p.averageRating.toFixed(1) : 'â€”'}</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
           <View style={styles.statCard}>
@@ -260,7 +260,7 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>MOTOR</Text>
           <View style={styles.infoCard}>
             <InfoRow icon="bicycle-outline" label="Plate"  value={p.motorPlate} />
-            <InfoRow icon="car-outline"     label="Bike"   value={[p.motorMake, p.motorModel, p.motorColor].filter(Boolean).join(' · ')} />
+            <InfoRow icon="car-outline"     label="Bike"   value={[p.motorMake, p.motorModel, p.motorColor].filter(Boolean).join(' Â· ')} />
             <InfoRow
               icon="card-outline"
               label="Licence"
@@ -331,7 +331,7 @@ function InfoRow({ icon, label, value, badge, last }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value || '—'}</Text>
+        <Text style={styles.infoValue}>{value || 'â€”'}</Text>
       </View>
       {badge}
     </View>

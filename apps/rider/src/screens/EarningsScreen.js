@@ -89,7 +89,9 @@ export default function EarningsScreen() {
             <>
               {/* ── Hero earnings card ── */}
               <LinearGradient
-                colors={[colors.primaryLight + '40', colors.primary + '25', colors.card]}
+                colors={[colors.primaryLight, colors.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={styles.heroCard}
               >
                 <View style={styles.heroIconRow}>
@@ -173,12 +175,12 @@ const createStyles = (colors) => StyleSheet.create({
   retryBtn: { marginTop: 4, paddingHorizontal: 20, paddingVertical: 8, borderRadius: radius.md, borderWidth: 1, borderColor: colors.primary },
   retryText: { color: colors.primary, fontWeight: '700' },
 
-  heroCard: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: 24, marginBottom: 14, ...shadow.md },
+  heroCard: { borderRadius: radius.xl, padding: 24, marginBottom: 14, ...shadow.brand },
   heroIconRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  heroIconBg: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.accent + '22', alignItems: 'center', justifyContent: 'center' },
-  heroLabel:  { fontSize: 13, color: colors.muted, fontWeight: '600' },
+  heroIconBg: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  heroLabel:  { fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: '600' },
   heroAmount: { fontSize: 42, fontWeight: '900', color: colors.accent, marginBottom: 8 },
-  heroPill:   { fontSize: 13, color: colors.muted },
+  heroPill:   { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
 
   metricsRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
   metricCard: { flex: 1, backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: 16, alignItems: 'center' },

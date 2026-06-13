@@ -16,25 +16,26 @@ const SIZES = [
   { id: 'large',  label: 'Large',  desc: 'Large box, multiple items' },
 ]
 
+// ── Google Places via backend proxy (better Ghana coverage) ──────────────────
 async function reverseGeocode(lng, lat) {
-  const token = import.meta.env.VITE_MAPBOX_TOKEN
-  const res = await fetch(
-    `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${token}`
-  )
-  if (!res.ok) return null
-  const data = await res.json()
-  return data.features?.[0]?.properties?.full_address
-      ?? data.features?.[0]?.properties?.place_formatted
-      ?? null
+  try {
+    const res = await api.get(`/places/reverse?lat=${lat}&lng=${lng}`)
+    return res.data?.address ?? null
+  } catch { return null }
 }
 
 async function forwardGeocode(query) {
-  const token = import.meta.env.VITE_MAPBOX_TOKEN
-  const res = await fetch(
-    `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(query)}&proximity=ip&limit=8&access_token=${token}`
-  )
-  if (!res.ok) return []
-  return (await res.json()).features ?? []
+  try {
+    const res = await api.get(`/places/autocomplete?q=${encodeURIComponent(query)}`)
+    return res.data ?? []
+  } catch { return [] }
+}
+
+async function getPlaceDetails(placeId) {
+  try {
+    const res = await api.get(`/places/details?place_id=${encodeURIComponent(placeId)}`)
+    return res.data ?? null
+  } catch { return null }
 }
 
 export default function PlaceOrder() {
@@ -232,20 +233,26 @@ export default function PlaceOrder() {
     }, 300)
   }
 
-  function selectPickupSuggestion(feature) {
-    const [lng, lat] = feature.geometry.coordinates
-    const addr = feature.properties.full_address || feature.properties.place_formatted || ''
-    setForm((f) => ({ ...f, pickupAddress: addr, pickupLat: lat, pickupLng: lng }))
+  async function selectPickupSuggestion(prediction) {
     setPickupSuggestions([])
+    setPickupSearching(true)
+    const details = await getPlaceDetails(prediction.place_id)
+    setPickupSearching(false)
+    if (!details) return
+    const { lat, lng, address } = details
+    setForm((f) => ({ ...f, pickupAddress: address, pickupLat: lat, pickupLng: lng }))
     mapInst.current?.flyTo({ center: [lng, lat], zoom: 15, duration: 800 })
     placeMarker('pickup', lng, lat)
   }
 
-  function selectDropoffSuggestion(feature) {
-    const [lng, lat] = feature.geometry.coordinates
-    const addr = feature.properties.full_address || feature.properties.place_formatted || ''
-    setForm((f) => ({ ...f, dropoffAddress: addr, dropoffLat: lat, dropoffLng: lng }))
+  async function selectDropoffSuggestion(prediction) {
     setDropoffSuggestions([])
+    setDropoffSearching(true)
+    const details = await getPlaceDetails(prediction.place_id)
+    setDropoffSearching(false)
+    if (!details) return
+    const { lat, lng, address } = details
+    setForm((f) => ({ ...f, dropoffAddress: address, dropoffLat: lat, dropoffLng: lng }))
     mapInst.current?.flyTo({ center: [lng, lat], zoom: 15, duration: 800 })
     placeMarker('dropoff', lng, lat)
   }
@@ -361,12 +368,12 @@ export default function PlaceOrder() {
                   </div>
                   {pickupSuggestions.length > 0 && (
                     <ul className="address-suggestions">
-                      {pickupSuggestions.map((f) => (
-                        <li key={f.id} onMouseDown={() => selectPickupSuggestion(f)}>
+                      {pickupSuggestions.map((p) => (
+                        <li key={p.place_id} onMouseDown={() => selectPickupSuggestion(p)}>
                           <MapPin size={12} />
                           <span>
-                            <span className="suggestion-main">{f.properties.name}</span>
-                            <span className="suggestion-sub">{f.properties.place_formatted}</span>
+                            <span className="suggestion-main">{p.main}</span>
+                            <span className="suggestion-sub">{p.sub}</span>
                           </span>
                         </li>
                       ))}
@@ -420,12 +427,12 @@ export default function PlaceOrder() {
                   </div>
                   {dropoffSuggestions.length > 0 && (
                     <ul className="address-suggestions">
-                      {dropoffSuggestions.map((f) => (
-                        <li key={f.id} onMouseDown={() => selectDropoffSuggestion(f)}>
+                      {dropoffSuggestions.map((p) => (
+                        <li key={p.place_id} onMouseDown={() => selectDropoffSuggestion(p)}>
                           <MapPin size={12} />
                           <span>
-                            <span className="suggestion-main">{f.properties.name}</span>
-                            <span className="suggestion-sub">{f.properties.place_formatted}</span>
+                            <span className="suggestion-main">{p.main}</span>
+                            <span className="suggestion-sub">{p.sub}</span>
                           </span>
                         </li>
                       ))}
@@ -507,11 +514,37 @@ export default function PlaceOrder() {
                 <div className="estimate-box">
                   <div className="estimate-row"><span>Distance</span><b>{estimate.distanceKm} km</b></div>
                   <div className="estimate-row">
-                    <DollarSign size={14} /><span>Estimated</span>
-                    <b className="price">{formatMoney(estimate.estimatedPrice)}</b>
+                    <DollarSign size={14} />
+                    <span>{estimate.individualSaving > 0 ? 'Your Price' : 'Estimated'}</span>
+                    <div style={{ textAlign: 'right', lineHeight: 1.2 }}>
+                      {estimate.individualSaving > 0 && (
+                        <div style={{ fontSize: '.75rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                          {formatMoney(estimate.estimatedPrice + estimate.individualSaving)}
+                        </div>
+                      )}
+                      <b className="price">{formatMoney(estimate.estimatedPrice)}</b>
+                    </div>
                   </div>
+                  {estimate.individualSaving > 0 && (
+                    <div className="estimate-row" style={{
+                      color: 'var(--success)',
+                      borderTop: '1px dashed rgba(16,185,129,0.2)',
+                      marginTop: '.5rem',
+                      background: 'rgba(16,185,129,0.08)',
+                      borderRadius: '6px',
+                      padding: '.5rem .75rem',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                        <span style={{ background: 'var(--success)', color: '#fff', fontSize: '.65rem', fontWeight: '900', padding: '2px 5px', borderRadius: '3px' }}>
+                          {estimate.discountPercent}% OFF
+                        </span>
+                        <span style={{ fontSize: '.82rem' }}>Your discount</span>
+                      </div>
+                      <b>-{formatMoney(estimate.individualSaving)} saved</b>
+                    </div>
+                  )}
                   {estimate.businessSaving > 0 && (
-                    <div className="estimate-row saving-row" style={{ color: 'var(--success)', borderTop: '1px dashed rgba(16,185,129,0.2)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                    <div className="estimate-row" style={{ color: 'var(--success)', borderTop: '1px dashed rgba(16,185,129,0.2)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
                       <span>Business Savings</span>
                       <b>-{formatMoney(estimate.businessSaving)}</b>
                     </div>

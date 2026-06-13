@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Platform, Animated, ActivityIndicator, Alert, Dimensions, Image,
+  Platform, Animated, ActivityIndicator, Alert, Dimensions, Image, Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -209,8 +209,14 @@ export default function TrackOrderScreen({ navigation, route }) {
       socket = s;
       socket.emit('order:watch', { orderId });
       socket.on('rider:location', handleRiderLocation);
-      socket.on('order:status_changed', ({ status }) => {
-        setOrder(o => o ? { ...o, status } : o);
+      socket.on('order:status_changed', ({ status, pickedUpAt, deliveredAt, deliveryPhotoUrl }) => {
+        setOrder(o => o ? {
+          ...o,
+          status,
+          ...(pickedUpAt ? { pickedUpAt } : {}),
+          ...(deliveredAt ? { deliveredAt } : {}),
+          ...(deliveryPhotoUrl ? { deliveryPhotoUrl } : {}),
+        } : o);
         if (status === 'DELIVERED' && Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -355,7 +361,10 @@ export default function TrackOrderScreen({ navigation, route }) {
           </View>
         )}
         <Text style={styles.statusLabel}>
-          {cancelled ? '❌ Cancelled' : STATUS_LABELS[order.status]}
+          {cancelled ? '❌ Cancelled'
+            : order.status === 'ARRIVED'
+              ? (order.pickedUpAt ? '📍 Arrived at drop-off' : '📍 Arrived at pickup')
+              : STATUS_LABELS[order.status]}
         </Text>
 
         {/* Route summary */}
@@ -403,13 +412,35 @@ export default function TrackOrderScreen({ navigation, route }) {
               </Text>
             </View>
             {order.rider.phone && (
-              <TouchableOpacity
-                onPress={() => {}}
-                style={styles.callBtn}
-              >
-                <Ionicons name="call" size={16} color={colors.success} />
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(`tel:${order.rider.phone}`)}
+                  style={styles.callBtn}
+                >
+                  <Ionicons name="call" size={16} color={colors.success} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(`sms:${order.rider.phone}`)}
+                  style={styles.smsBtn}
+                >
+                  <Ionicons name="chatbubble" size={16} color={colors.info} />
+                </TouchableOpacity>
+              </>
             )}
+          </View>
+        )}
+
+        {/* Proof of delivery photo */}
+        {delivered && order.deliveryPhotoUrl && (
+          <View style={styles.proofCard}>
+            <Text style={styles.proofTitle}>📸 Proof of Delivery</Text>
+            <Image
+              source={{ uri: order.deliveryPhotoUrl.startsWith('http') || order.deliveryPhotoUrl.startsWith('data:')
+                ? order.deliveryPhotoUrl
+                : `${process.env.EXPO_PUBLIC_API_URL}${order.deliveryPhotoUrl}` }}
+              style={styles.proofPhoto}
+              resizeMode="cover"
+            />
           </View>
         )}
 
@@ -543,6 +574,20 @@ const createStyles = (colors) => StyleSheet.create({
     borderWidth: 1, borderColor: colors.success + '30',
     alignItems: 'center', justifyContent: 'center',
   },
+  smsBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.info + '18',
+    borderWidth: 1, borderColor: colors.info + '30',
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  proofCard: {
+    backgroundColor: colors.card, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.success + '30',
+    padding: 14,
+  },
+  proofTitle: { fontSize: 12, fontWeight: '700', color: colors.success, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  proofPhoto: { width: '100%', height: 200, borderRadius: radius.md, backgroundColor: colors.surface },
 
   ratingCard: {
     backgroundColor: colors.card, borderRadius: radius.lg,

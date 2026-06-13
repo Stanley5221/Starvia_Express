@@ -73,6 +73,10 @@ model User {
   role         Role        @default(CUSTOMER)
   // Release 1: Differentiates individual vs business customers (role stays CUSTOMER for both)
   accountType  AccountType @default(INDIVIDUAL)
+  // Per-customer discount override (0 = use global individual rate, >0 = use this instead)
+  discountPercent      Float     @default(0)
+  // Expo push token for customer order-status notifications
+  pushToken            String?
   // Closed fleet: set to true when admin provisions a rider account with a temp password
   mustChangePassword   Boolean   @default(false)
   isSuspended          Boolean   @default(false)
@@ -251,13 +255,14 @@ model RiderLocation {
 
 // Individual customer pricing — managed by admin
 model PricingConfig {
-  id           String   @id @default(cuid())
-  basePrice    Float    @default(5.0)
-  pricePerKm   Float    @default(4.0)
-  minPrice     Float    @default(8.0)
-  currency     String   @default("GHS")
-  updatedAt    DateTime @updatedAt
-  updatedBy    String?
+  id              String   @id @default(cuid())
+  basePrice       Float    @default(5.0)
+  pricePerKm      Float    @default(4.0)
+  minPrice        Float    @default(8.0)
+  currency        String   @default("GHS")
+  discountPercent Float    @default(0)   // Global discount for ALL individual customers
+  updatedAt       DateTime @updatedAt
+  updatedBy       String?
 }
 
 // Geo-dispatch settings — managed by admin, loaded with 60s cache in dispatch.js

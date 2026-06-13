@@ -97,15 +97,17 @@ export function ActiveOrderProvider({ children }) {
   // Send idle location every 60s when available and not on a delivery
   // so geo-dispatch always has a fresh rider position
   useEffect(() => {
-    if (!rider?.isAvailable || activeOrder) return;
+    if (!rider?.isAvailable || activeOrder) return undefined;
+
+    let intervalId = null;
+    let mounted = true;
 
     async function sendLocation() {
       try {
-        const { status } = await Location.getForegroundPermissionsAsync();
-        if (status !== 'granted') return;
         const pos = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
+        if (!mounted) return;
         await api.post('/riders/location', {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
@@ -113,9 +115,24 @@ export function ActiveOrderProvider({ children }) {
       } catch (_) {}
     }
 
-    sendLocation();
-    const id = setInterval(sendLocation, 60_000);
-    return () => clearInterval(id);
+    (async () => {
+      try {
+        // Request permission if not already granted — first time rider goes online
+        let { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          const result = await Location.requestForegroundPermissionsAsync();
+          status = result.status;
+        }
+        if (!mounted || status !== 'granted') return;
+        sendLocation();
+        intervalId = setInterval(sendLocation, 60_000);
+      } catch (_) {}
+    })();
+
+    return () => {
+      mounted = false;
+      if (intervalId !== null) clearInterval(intervalId);
+    };
   }, [rider?.isAvailable, !!activeOrder]);
 
   async function acceptOrder(orderId) {

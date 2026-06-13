@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -24,24 +24,26 @@ const SIZES = [
   { id: 'large',  label: 'Large',  icon: 'archive-outline', desc: 'Large box' },
 ];
 
+// ── Google Places via backend proxy (better Ghana coverage) ──────────────────
 async function geocodeForward(query) {
   if (!query || query.length < 2) return [];
   try {
-    const url = `https://api.mapbox.com/search/geocode/v6/forward?q=${encodeURIComponent(query)}&proximity=ip&limit=6&access_token=${MAPBOX_TOKEN}`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    return data.features || [];
+    const res  = await api.get(`/places/autocomplete?q=${encodeURIComponent(query)}`);
+    return res.data || [];
   } catch { return []; }
+}
+
+async function getPlaceDetails(placeId) {
+  try {
+    const res  = await api.get(`/places/details?place_id=${encodeURIComponent(placeId)}`);
+    return res.data || null;
+  } catch { return null; }
 }
 
 async function geocodeReverse(lng, lat) {
   try {
-    const url = `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${lng}&latitude=${lat}&access_token=${MAPBOX_TOKEN}`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    return data.features?.[0]?.properties?.full_address
-        || data.features?.[0]?.properties?.place_formatted
-        || null;
+    const res  = await api.get(`/places/reverse?lat=${lat}&lng=${lng}`);
+    return res.data?.address || null;
   } catch { return null; }
 }
 
@@ -54,7 +56,7 @@ async function fetchDirections(pickup, dropoff) {
   } catch { return null; }
 }
 
-// ── Address Search Input ──────────────────────────────────────────────────────
+// â”€â”€ Address Search Input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AddressInput({ label, value, onChange, onSelect, placeholder, showGPS, onGPS, gpsLoading, color }) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -77,11 +79,13 @@ function AddressInput({ label, value, onChange, onSelect, placeholder, showGPS, 
     }, 300);
   }
 
-  function select(feature) {
+  async function select(prediction) {
     setSuggestions([]);
-    const [lng, lat] = feature.geometry.coordinates;
-    const addr = feature.properties.full_address || feature.properties.place_formatted || '';
-    onSelect({ address: addr, lng, lat });
+    setSearching(true);
+    const details = await getPlaceDetails(prediction.place_id);
+    setSearching(false);
+    if (!details) return;
+    onSelect({ address: details.address, lng: details.lng, lat: details.lat });
   }
 
   return (
@@ -112,16 +116,16 @@ function AddressInput({ label, value, onChange, onSelect, placeholder, showGPS, 
       </View>
       {suggestions.length > 0 && (
         <View style={styles.suggestions}>
-          {suggestions.slice(0, 5).map((f, i) => (
+          {suggestions.slice(0, 5).map((p, i) => (
             <TouchableOpacity
-              key={f.id || i}
-              onPress={() => select(f)}
+              key={p.place_id || i}
+              onPress={() => select(p)}
               style={[styles.suggestion, i < suggestions.length - 1 && styles.suggestionBorder]}
             >
               <Ionicons name="location-outline" size={14} color={colors.muted} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.suggMain} numberOfLines={1}>{f.properties.name}</Text>
-                <Text style={styles.suggSub} numberOfLines={1}>{f.properties.place_formatted}</Text>
+                <Text style={styles.suggMain} numberOfLines={1}>{p.main}</Text>
+                <Text style={styles.suggSub} numberOfLines={1}>{p.sub}</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -131,7 +135,7 @@ function AddressInput({ label, value, onChange, onSelect, placeholder, showGPS, 
   );
 }
 
-// ── Mapbox Map ────────────────────────────────────────────────────────────────
+// â”€â”€ Mapbox Map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DeliveryMap({ pickupCoords, dropoffCoords, routeCoords, style }) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -201,7 +205,7 @@ function DeliveryMap({ pickupCoords, dropoffCoords, routeCoords, style }) {
   }
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function PlaceOrderScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -266,7 +270,7 @@ export default function PlaceOrderScreen({ navigation }) {
       const { latitude: lat, longitude: lng } = loc.coords;
       setF('pickupLat', lat);
       setF('pickupLng', lng);
-      setF('pickupAddress', 'Locating…');
+      setF('pickupAddress', 'Locatingâ€¦');
       const addr = await geocodeReverse(lng, lat);
       setF('pickupAddress', addr || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       if (Platform.OS !== 'web') await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -334,7 +338,7 @@ export default function PlaceOrderScreen({ navigation }) {
     }
   }
 
-  // ── Step 0: Locations ────────────────────────────────────────────────────────
+  // â”€â”€ Step 0: Locations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function renderLocations() {
     return (
       <View style={{ flex: 1 }}>
@@ -345,7 +349,7 @@ export default function PlaceOrderScreen({ navigation }) {
           style={styles.map}
         />
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.bottomSheet}
         >
           <ScrollView
@@ -403,9 +407,17 @@ export default function PlaceOrderScreen({ navigation }) {
                         <Text style={styles.routeSummaryText}>~{routeInfo.durationMin} min</Text>
                       </View>
                       {estimate && (
-                        <View style={[styles.routeSummaryChip, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '30' }]}>
-                          <Text style={[styles.routeSummaryText, { color: colors.accent, fontWeight: '800' }]}>
-                            Est. {formatMoney(estimate.estimatedPrice)}
+                        <View style={[styles.routeSummaryChip, {
+                          backgroundColor: estimate.individualSaving > 0 ? colors.success + '18' : colors.primary + '18',
+                          borderColor: estimate.individualSaving > 0 ? colors.success + '40' : colors.primary + '30',
+                        }]}>
+                          {estimate.individualSaving > 0 && (
+                            <View style={{ backgroundColor: colors.success, borderRadius: 3, paddingHorizontal: 4, paddingVertical: 1 }}>
+                              <Text style={{ color: '#fff', fontSize: 9, fontWeight: '900' }}>{estimate.discountPercent}% OFF</Text>
+                            </View>
+                          )}
+                          <Text style={[styles.routeSummaryText, { color: estimate.individualSaving > 0 ? colors.success : colors.accent, fontWeight: '800' }]}>
+                            {formatMoney(estimate.estimatedPrice)}
                           </Text>
                         </View>
                       )}
@@ -419,10 +431,10 @@ export default function PlaceOrderScreen({ navigation }) {
     );
   }
 
-  // ── Step 1: Details ──────────────────────────────────────────────────────────
+  // â”€â”€ Step 1: Details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function renderDetails() {
     return (
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           contentContainerStyle={[styles.stepScroll]}
           keyboardShouldPersistTaps="handled"
@@ -510,7 +522,7 @@ export default function PlaceOrderScreen({ navigation }) {
     );
   }
 
-  // ── Step 2: Confirm ──────────────────────────────────────────────────────────
+  // â”€â”€ Step 2: Confirm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function renderConfirm() {
     return (
       <ScrollView contentContainerStyle={styles.stepScroll} showsVerticalScrollIndicator={false}>
@@ -523,7 +535,7 @@ export default function PlaceOrderScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={styles.confirmRowLabel}>Pickup</Text>
               <Text style={styles.confirmRowValue} numberOfLines={2}>{form.pickupAddress}</Text>
-              <Text style={styles.confirmRowSub}>{form.pickupContactName} · {form.pickupPhone}</Text>
+              <Text style={styles.confirmRowSub}>{form.pickupContactName} Â· {form.pickupPhone}</Text>
             </View>
           </View>
           <View style={styles.confirmConnector} />
@@ -532,7 +544,7 @@ export default function PlaceOrderScreen({ navigation }) {
             <View style={{ flex: 1 }}>
               <Text style={styles.confirmRowLabel}>Drop-off</Text>
               <Text style={styles.confirmRowValue} numberOfLines={2}>{form.dropoffAddress}</Text>
-              <Text style={styles.confirmRowSub}>{form.recipientName} · {form.recipientPhone}</Text>
+              <Text style={styles.confirmRowSub}>{form.recipientName} Â· {form.recipientPhone}</Text>
             </View>
           </View>
         </View>
@@ -543,7 +555,7 @@ export default function PlaceOrderScreen({ navigation }) {
             <Ionicons name="cube-outline" size={16} color={colors.muted} />
             <Text style={styles.confirmDetailLabel}>Package</Text>
             <Text style={styles.confirmDetailValue}>
-              {form.packageDescription || '—'}{form.packageSize ? ` · ${form.packageSize}` : ''}
+              {form.packageDescription || 'â€”'}{form.packageSize ? ` Â· ${form.packageSize}` : ''}
             </Text>
           </View>
           {form.packagePhotoUrl && (
@@ -552,7 +564,9 @@ export default function PlaceOrderScreen({ navigation }) {
         </View>
 
         {/* Price card */}
-        <View style={[styles.confirmCard, { borderColor: colors.primary + '30' }]}>
+        <View style={[styles.confirmCard, {
+          borderColor: estimate?.individualSaving > 0 ? colors.success + '40' : colors.primary + '30',
+        }]}>
           {estimating
             ? <ActivityIndicator color={colors.primary} />
             : estimate
@@ -564,12 +578,34 @@ export default function PlaceOrderScreen({ navigation }) {
                   <Text style={styles.confirmDetailValue}>{estimate.distanceKm} km</Text>
                 </View>
                 <View style={[styles.confirmDetailRow, { marginTop: 8, borderTopWidth: 1, borderTopColor: colors.borderLight, paddingTop: 8 }]}>
-                  <Ionicons name="wallet-outline" size={16} color={colors.accent} />
-                  <Text style={[styles.confirmDetailLabel, { color: colors.accent }]}>Estimated Price</Text>
-                  <Text style={[styles.confirmDetailValue, { color: colors.accent, fontSize: 20, fontWeight: '900' }]}>
-                    {formatMoney(estimate.estimatedPrice)}
+                  <Ionicons name="wallet-outline" size={16} color={estimate.individualSaving > 0 ? colors.success : colors.accent} />
+                  <Text style={[styles.confirmDetailLabel, { color: estimate.individualSaving > 0 ? colors.success : colors.accent }]}>
+                    {estimate.individualSaving > 0 ? 'Your Price' : 'Estimated Price'}
                   </Text>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    {estimate.individualSaving > 0 && (
+                      <Text style={{ color: colors.muted, fontSize: 12, textDecorationLine: 'line-through', marginBottom: 2 }}>
+                        {formatMoney(estimate.estimatedPrice + estimate.individualSaving)}
+                      </Text>
+                    )}
+                    <Text style={{ color: estimate.individualSaving > 0 ? colors.success : colors.accent, fontSize: 22, fontWeight: '900' }}>
+                      {formatMoney(estimate.estimatedPrice)}
+                    </Text>
+                  </View>
                 </View>
+                {estimate.individualSaving > 0 && (
+                  <View style={{ marginTop: 8, backgroundColor: colors.success + '14', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={{ backgroundColor: colors.success, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900' }}>{estimate.discountPercent}% OFF</Text>
+                      </View>
+                      <Text style={{ color: colors.success, fontSize: 12, fontWeight: '600' }}>Your discount</Text>
+                    </View>
+                    <Text style={{ color: colors.success, fontWeight: '800', fontSize: 14 }}>
+                      -{formatMoney(estimate.individualSaving)} saved
+                    </Text>
+                  </View>
+                )}
               </>
             )
             : <Text style={{ color: colors.muted }}>Price will be calculated after assignment</Text>

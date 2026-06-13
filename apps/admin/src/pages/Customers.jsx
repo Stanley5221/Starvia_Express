@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../../../../shared/api'
 import { formatMoney } from '../../../../shared/currency'
 import toast from 'react-hot-toast'
-import { Users, Package, X, UserCheck, UserX, Trash2, AlertCircle, Pencil } from 'lucide-react'
+import { Users, Package, X, UserCheck, UserX, Trash2, AlertCircle, Percent, Pencil } from 'lucide-react'
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 const STATUS_COLOR = {
@@ -24,6 +24,8 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editForm, setEditForm] = useState({ name: '', phone: '' })
+  const [discountForm, setDiscountForm] = useState({ discountPercent: 0 })
+  const [savingDiscount, setSavingDiscount] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [tab, setTab] = useState('profile')
 
@@ -35,6 +37,7 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }) {
       const { data } = await api.get(`/admin/customers/${customerId}`)
       setCustomer(data)
       setEditForm({ name: data.name, phone: data.phone || '' })
+      setDiscountForm({ discountPercent: data.discountPercent ?? 0 })
     } catch {
       toast.error('Failed to load customer')
       onClose()
@@ -50,6 +53,17 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }) {
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to save')
     } finally { setSaving(false) }
+  }
+
+  async function saveDiscount() {
+    setSavingDiscount(true)
+    try {
+      await api.patch(`/admin/customers/${customerId}/discount`, discountForm)
+      toast.success('Discount updated')
+      loadCustomer()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to save discount')
+    } finally { setSavingDiscount(false) }
   }
 
   async function toggleSuspend() {
@@ -141,7 +155,7 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }) {
 
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          {[['profile', 'Profile & Edit'], ['orders', 'Order History'], ['security', 'Security']].map(([id, label]) => (
+          {[['profile', 'Profile & Edit'], ['orders', 'Order History'], ['discount', 'Discount'], ['security', 'Security']].map(([id, label]) => (
             <button key={id} type="button" onClick={() => setTab(id)} style={{
               flex: 1, padding: '.85rem', background: 'transparent', border: 'none', cursor: 'pointer',
               color: tab === id ? '#F5A623' : 'var(--muted)', fontWeight: tab === id ? 700 : 600, fontSize: '.9rem',
@@ -223,6 +237,58 @@ function CustomerDetailModal({ customerId, onClose, onUpdated }) {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* DISCOUNT TAB */}
+          {tab === 'discount' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Current global rate notice */}
+              <div style={{ background: 'rgba(245,166,35,0.06)', borderRadius: 12, padding: '1rem 1.25rem', border: '1px solid rgba(245,166,35,0.2)' }}>
+                <div style={{ fontSize: '.8rem', color: '#F5A623', fontWeight: 700, marginBottom: '.25rem', textTransform: 'uppercase', letterSpacing: '.04em' }}>How discounts work</div>
+                <div style={{ fontSize: '.83rem', color: 'var(--muted)', lineHeight: 1.6 }}>
+                  Set a per-customer discount below. If 0, the global individual discount from <strong>Pricing → Individual Standard Rate</strong> applies.
+                  A non-zero value here overrides the global rate for this customer only.
+                </div>
+              </div>
+
+              {/* Current discount badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '.75rem', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: '.4rem' }}>Current Discount</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: customer.discountPercent > 0 ? '#10B981' : 'var(--muted)' }}>
+                    {customer.discountPercent ?? 0}%
+                  </div>
+                  <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginTop: '.15rem' }}>
+                    {customer.discountPercent > 0 ? 'Personal override active' : 'Using global rate'}
+                  </div>
+                </div>
+                <Percent size={40} style={{ opacity: .15 }} />
+              </div>
+
+              {/* Discount input */}
+              <div className="form-group">
+                <label className="form-label">Personal Discount (%)</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  placeholder="0"
+                  value={discountForm.discountPercent}
+                  onChange={e => setDiscountForm({ discountPercent: Math.min(100, Math.max(0, +e.target.value)) })}
+                />
+                <small style={{ color: 'var(--text-muted)', fontSize: '.78rem' }}>
+                  Enter 0 to remove the personal override and fall back to the global individual discount.
+                </small>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-primary" onClick={saveDiscount} disabled={savingDiscount} style={{ minWidth: 140 }}>
+                  {savingDiscount ? 'Saving…' : 'Save Discount'}
+                </button>
+              </div>
             </div>
           )}
 

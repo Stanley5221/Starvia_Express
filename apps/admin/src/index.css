@@ -328,6 +328,13 @@ table select:focus {
   border-color: #F5A623;
 }
 
+/* Force dark background on native <select> option lists (Chrome/Edge/Firefox) */
+select option,
+select optgroup {
+  background-color: #2b1515;
+  color: #ffffff;
+}
+
 /* ─── Stats Grid ─────────────────────────────────────────────────────────── */
 .stats-grid {
   display: grid;

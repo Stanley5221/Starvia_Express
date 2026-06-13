@@ -414,22 +414,39 @@ router.get('/pricing', ...adminOnly, async (req, res, next) => {
 router.put('/pricing', ...adminOnly, async (req, res, next) => {
   const prisma = req.app.get('prisma');
   try {
-    const { basePrice, pricePerKm, minPrice, currency } = req.body;
+    const { basePrice, pricePerKm, minPrice, currency, discountPercent } = req.body;
+    const data = {
+      basePrice, pricePerKm, minPrice, currency,
+      discountPercent: discountPercent ?? 0,
+      updatedBy: req.user.id,
+    };
     let config = await prisma.pricingConfig.findFirst();
     if (!config) {
-      config = await prisma.pricingConfig.create({
-        data: { basePrice, pricePerKm, minPrice, currency, updatedBy: req.user.id },
-      });
+      config = await prisma.pricingConfig.create({ data });
     } else {
-      config = await prisma.pricingConfig.update({
-        where: { id: config.id },
-        data: { basePrice, pricePerKm, minPrice, currency, updatedBy: req.user.id },
-      });
+      config = await prisma.pricingConfig.update({ where: { id: config.id }, data });
     }
     res.json(config);
   } catch (err) {
     next(err);
   }
+});
+
+// ─── PATCH /admin/customers/:id/discount ─── set per-customer discount ───────
+router.patch('/customers/:id/discount', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const discountPercent = parseFloat(req.body.discountPercent ?? 0);
+    if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+      return res.status(400).json({ error: 'discountPercent must be between 0 and 100' });
+    }
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { discountPercent },
+      select: { id: true, name: true, email: true, discountPercent: true },
+    });
+    res.json(user);
+  } catch (err) { next(err); }
 });
 
 router.get('/dispatch', ...adminOnly, async (req, res, next) => {
@@ -470,6 +487,33 @@ router.put('/dispatch', ...adminOnly, async (req, res, next) => {
 });
 
 // ── Dispatch Zones CRUD ───────────────────────────────────────────────────────
+
+// GET /admin/dispatch/riders — rider availability & location freshness status
+router.get('/dispatch/riders', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const riders = await prisma.rider.findMany({
+      where: { isApproved: true },
+      select: {
+        id: true, fullName: true, phone: true,
+        isAvailable: true, isOnDelivery: true, isSuspended: true,
+        lastLat: true, lastLng: true, lastLocationAt: true,
+        pushToken: true,
+      },
+      orderBy: { isAvailable: 'desc' },
+    });
+    const now = Date.now();
+    const result = riders.map(r => ({
+      ...r,
+      locationAgeMinutes: r.lastLocationAt
+        ? Math.round((now - new Date(r.lastLocationAt).getTime()) / 60000)
+        : null,
+      hasLocation: r.lastLat != null && r.lastLng != null,
+      hasPushToken: !!r.pushToken,
+    }));
+    res.json(result);
+  } catch (err) { next(err); }
+});
 
 router.get('/dispatch/zones', ...adminOnly, async (req, res, next) => {
   const prisma = req.app.get('prisma');

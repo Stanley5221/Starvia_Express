@@ -1,7 +1,47 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import * as storage from '../lib/storage';
 import api from '../lib/api';
 import { connectSocket, disconnectSocket } from '../lib/socket';
+
+// Show notifications even when the app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+async function registerPushToken() {
+  if (Platform.OS === 'web') return;
+  try {
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    let finalStatus = existing;
+    if (existing !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') return;
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('order-updates', {
+        name: 'Order Updates',
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: 'default',
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    const tokenData = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined
+    );
+    await api.post('/users/me/push-token', { pushToken: tokenData.data });
+  } catch (err) {
+    console.warn('[Push] customer token registration failed:', err.message);
+  }
+}
 
 // Persistent reconnect handler reference so it can be properly removed on logout
 let _customerJoinHandler = null;
@@ -35,6 +75,7 @@ export function AuthProvider({ children }) {
         setUser(parsed);
         api.defaults.headers.Authorization = `Bearer ${token}`;
         setupCustomerSocket();
+        registerPushToken();
       }
     } catch (_) {
     } finally {
@@ -49,6 +90,7 @@ export function AuthProvider({ children }) {
     await storage.setItemAsync('cust_user', JSON.stringify(data.user));
     setUser(data.user);
     await setupCustomerSocket();
+    registerPushToken();
     return data.user;
   }
 
@@ -64,6 +106,7 @@ export function AuthProvider({ children }) {
   async function logout() {
     _customerJoinHandler = null;
     disconnectSocket();
+    try { await api.post('/users/me/push-token', { pushToken: null }); } catch (_) {}
     await storage.deleteItemAsync('cust_token');
     await storage.deleteItemAsync('cust_user');
     setUser(null);

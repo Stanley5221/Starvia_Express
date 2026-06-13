@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as Location from 'expo-location';
 import Constants from 'expo-constants';
 import * as storage from '../lib/storage';
 import api from '../lib/api';
@@ -68,8 +69,15 @@ export function AuthProvider({ children }) {
       connectSocket()
         .then(socket => socket.emit('rider:join', { riderId: data.id }))
         .catch(() => {});
-      // Register Expo push token — non-blocking, non-fatal
-      registerPushToken().catch(() => {});
+      // Request permissions on first login so rider isn't surprised later
+      if (Platform.OS !== 'web') {
+        registerPushToken().catch(() => {});
+        Location.getForegroundPermissionsAsync()
+          .then(({ status }) => {
+            if (status !== 'granted') Location.requestForegroundPermissionsAsync().catch(() => {});
+          })
+          .catch(() => {});
+      }
       return data;
     } catch (err) {
       setRider(null);

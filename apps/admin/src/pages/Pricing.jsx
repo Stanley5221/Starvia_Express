@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 export default function Pricing() {
   const [activeTab, setActiveTab] = useState('standard') // 'standard' | 'business'
 
-  const [standardConfig, setStandardConfig] = useState({ basePrice: 0, pricePerKm: 0, minPrice: 0, currency: 'GHS' })
+  const [standardConfig, setStandardConfig] = useState({ basePrice: 0, pricePerKm: 0, minPrice: 0, currency: 'GHS', discountPercent: 0 })
   const [businessConfig, setBusinessConfig] = useState({ basePrice: 0, pricePerKm: 0, minPrice: 0, discountPercent: 0, label: 'Business Rate' })
 
   const [loading, setLoading] = useState(true)
@@ -97,6 +97,18 @@ export default function Pricing() {
               <input className="input-field" type="number" step="0.01" value={standardConfig.minPrice}
                 onChange={e => setStandardConfig({ ...standardConfig, minPrice: +e.target.value })} required />
               <small style={{ color: 'var(--text-muted)' }}>The absolute lowest price for placing a delivery order.</small>
+            </div>
+            <div className="input-group" style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', marginBottom: 8, color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                Global Individual Discount (%) <span style={{ color: 'var(--brand-accent)', fontWeight: 700 }}>— applies to ALL individual customers</span>
+              </label>
+              <input className="input-field" type="number" step="1" min="0" max="100"
+                placeholder="0" value={standardConfig.discountPercent ?? 0}
+                onChange={e => setStandardConfig({ ...standardConfig, discountPercent: +e.target.value })} />
+              <small style={{ color: 'var(--text-muted)' }}>
+                A % discount off the standard rate for every individual customer. 0 = no discount.
+                Override per-customer from the Customers page.
+              </small>
             </div>
             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={saving}>
               {saving ? <Loader size={16} className="loading" /> : <><Save size={16} /> Save Changes</>}

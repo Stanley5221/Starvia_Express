@@ -5,7 +5,7 @@ import api from '../../../shared/api'
 import { formatMoney } from '../../../shared/currency'
 import { connectSocket } from '../../../shared/socket'
 import {
-  MapPin, Package, Phone, Loader, Navigation, CheckCircle, Star, User, Bike,
+  MapPin, Package, Phone, Loader, Navigation, CheckCircle, Star, User, Bike, MessageSquare,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import './TrackOrder.css'
@@ -21,6 +21,13 @@ const STATUS_LABELS = {
   ARRIVED: 'Rider arrived',
   DELIVERED: 'Delivered',
   CANCELLED: 'Cancelled',
+}
+
+function getStatusLabel(order) {
+  if (order.status === 'ARRIVED') {
+    return order.pickedUpAt ? 'Arrived at drop-off' : 'Arrived at pickup'
+  }
+  return STATUS_LABELS[order.status] || order.status
 }
 
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -213,7 +220,15 @@ export default function TrackOrder() {
     const socket = connectSocket()
     socket.emit('order:watch', { orderId: id })
     const onLocation = ({ lat, lng }) => moveRider(lat, lng)
-    const onStatusChanged = ({ status }) => setOrder((o) => (o ? { ...o, status } : o))
+    const onStatusChanged = ({ status, pickedUpAt, deliveredAt, deliveryPhotoUrl }) => {
+      setOrder((o) => (o ? {
+        ...o,
+        status,
+        ...(pickedUpAt ? { pickedUpAt } : {}),
+        ...(deliveredAt ? { deliveredAt } : {}),
+        ...(deliveryPhotoUrl ? { deliveryPhotoUrl } : {}),
+      } : o))
+    }
     const onAssigned = ({ rider }) => {
       setOrder((o) => (o ? { ...o, rider: { ...o?.rider, ...rider, fullName: rider.name } } : o))
       toast.success(`${rider.name} is your rider`)
@@ -297,7 +312,7 @@ export default function TrackOrder() {
           <p>
             Order <code>#{order.id.slice(-8).toUpperCase()}</code>
             <span className={`status-pill status-${order.status.toLowerCase()}`}>
-              {STATUS_LABELS[order.status] || order.status}
+              {getStatusLabel(order)}
             </span>
           </p>
         </div>
@@ -379,9 +394,14 @@ export default function TrackOrder() {
                   </div>
                 </div>
                 {rider.phone && (
-                  <a href={`tel:${rider.phone}`} className="btn btn-outline btn-sm call-btn">
-                    <Phone size={14} /> Call rider
-                  </a>
+                  <div className="rider-contact-btns">
+                    <a href={`tel:${rider.phone}`} className="btn btn-outline btn-sm call-btn">
+                      <Phone size={14} /> Call rider
+                    </a>
+                    <a href={`sms:${rider.phone}`} className="btn btn-outline btn-sm sms-btn">
+                      <MessageSquare size={14} /> Message
+                    </a>
+                  </div>
                 )}
                 {distanceKm != null && order.status !== 'DELIVERED' && (
                   <p className="distance-remaining">~{distanceKm} km away</p>
@@ -404,7 +424,9 @@ export default function TrackOrder() {
                         {i < stepIdx ? <CheckCircle size={14} /> : i + 1}
                       </div>
                       <div>
-                        <div className="vstep-label">{STATUS_LABELS[s]}</div>
+                        <div className="vstep-label">
+                        {s === 'ARRIVED' ? getStatusLabel(order) : STATUS_LABELS[s]}
+                      </div>
                         {timeline.find((t) => t.label === STATUS_LABELS[s] || (s === 'PENDING' && t.label === 'Placed'))?.at && (
                           <div className="vstep-time">
                             {new Date(
@@ -432,6 +454,14 @@ export default function TrackOrder() {
                   <p className="delivered-at">
                     {new Date(order.deliveredAt).toLocaleString()}
                   </p>
+                )}
+                {order.deliveryPhotoUrl && (
+                  <div className="delivery-proof">
+                    <p className="proof-label"><CheckCircle size={13} /> Proof of delivery</p>
+                    <a href={order.deliveryPhotoUrl} target="_blank" rel="noopener noreferrer">
+                      <img src={order.deliveryPhotoUrl} alt="Proof of delivery" className="proof-photo" />
+                    </a>
+                  </div>
                 )}
                 {!ratingSent ? (
                   <>

@@ -16,6 +16,7 @@ const notifRoutes         = require('./routes/notifications');
 const userRoutes          = require('./routes/users');
 const businessRoutes      = require('./routes/business');
 const adminBusinessRoutes = require('./routes/admin-business');
+const placesRoutes        = require('./routes/places');
 
 const app    = express();
 const server = http.createServer(app);
@@ -169,6 +170,7 @@ app.use('/api/v1/tracking',       trackRoutes);
 app.use('/api/v1/notifications',  notifRoutes);
 app.use('/api/v1/users',          userRoutes);
 app.use('/api/v1/business',       businessRoutes);
+app.use('/api/v1/places',         placesRoutes);
 
 app.get('/api/v1/health', (_req, res) => res.json({ status: 'ok', ts: new Date() }));
 

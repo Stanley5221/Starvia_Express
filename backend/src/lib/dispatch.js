@@ -102,6 +102,25 @@ async function dispatchOrder(io, prisma, order) {
   const lngDelta   = radiusKm / 109;
   const freshSince = new Date(Date.now() - locationFreshMs);
 
+  // Diagnostic: log all available riders and why they may be excluded
+  const allAvailable = await prisma.rider.findMany({
+    where: { isApproved: true, isAvailable: true, isOnDelivery: false, isSuspended: false },
+    select: { id: true, lastLat: true, lastLng: true, lastLocationAt: true },
+  });
+  console.log(`[Dispatch] order ${order.id.slice(-8)} | pickup (${pickupLat.toFixed(4)},${pickupLng.toFixed(4)}) | radius ${radiusKm}km | fresh <${locationFreshMs / 60000}min | ${allAvailable.length} available rider(s)`);
+  for (const r of allAvailable) {
+    if (r.lastLat == null || r.lastLocationAt == null) {
+      console.log(`  rider ${r.id.slice(-6)}: NO LOCATION — has never sent a GPS update`);
+    } else {
+      const distKm = haversineKm(pickupLat, pickupLng, r.lastLat, r.lastLng);
+      const ageMin = ((Date.now() - r.lastLocationAt.getTime()) / 60000).toFixed(1);
+      const stale  = r.lastLocationAt < freshSince;
+      const far    = distKm > radiusKm;
+      const flags  = [stale && 'STALE', far && 'TOO FAR'].filter(Boolean).join(', ') || 'eligible';
+      console.log(`  rider ${r.id.slice(-6)}: ${distKm.toFixed(2)}km away, ${ageMin}min old — ${flags}`);
+    }
+  }
+
   const candidates = await prisma.rider.findMany({
     where: {
       isApproved:  true,

@@ -2,6 +2,18 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const { authenticate, authorize } = require('../middleware/auth');
 
+router.post('/me/push-token', authenticate, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const { pushToken } = req.body;
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { pushToken: pushToken || null },
+    });
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
 router.patch('/me', authenticate, async (req, res, next) => {
   const prisma = req.app.get('prisma');
   try {

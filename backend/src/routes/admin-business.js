@@ -283,6 +283,61 @@ router.get('/businesses/:id/documents/:docId/file', ...adminOnly, async (req, re
   } catch (err) { next(err); }
 });
 
+// ── GET /api/v1/admin/businesses/pricing ──────────────────────────────────
+// Get the global business pricing default
+router.get('/businesses/pricing', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    let config = await prisma.businessPricingConfig.findFirst({
+      where: { businessId: null },
+    });
+    // Auto-create if missing (shouldn't happen after seeding, but safe fallback)
+    if (!config) {
+      config = await prisma.businessPricingConfig.create({
+        data: { businessId: null, pricePerKm: 3.0, basePrice: 5.0, minPrice: 8.0, label: 'Business Rate' },
+      });
+    }
+    res.json(config);
+  } catch (err) { next(err); }
+});
+
+// ── PUT /api/v1/admin/businesses/pricing ──────────────────────────────────
+// Update global business pricing — no code deployment needed
+router.put('/businesses/pricing', ...adminOnly, async (req, res, next) => {
+  const prisma = req.app.get('prisma');
+  try {
+    const { pricePerKm, basePrice, minPrice, discountPercent, label } = req.body;
+
+    if (pricePerKm !== undefined && (isNaN(pricePerKm) || +pricePerKm < 0)) {
+      return res.status(400).json({ error: 'pricePerKm must be a non-negative number' });
+    }
+
+    let config = await prisma.businessPricingConfig.findFirst({ where: { businessId: null } });
+
+    const updateData = {
+      updatedBy: req.user.id,
+      ...(pricePerKm !== undefined    && { pricePerKm: +pricePerKm }),
+      ...(basePrice !== undefined     && { basePrice: +basePrice }),
+      ...(minPrice !== undefined      && { minPrice: +minPrice }),
+      ...(discountPercent !== undefined && { discountPercent: +discountPercent }),
+      ...(label !== undefined         && { label }),
+    };
+
+    if (config) {
+      config = await prisma.businessPricingConfig.update({
+        where: { id: config.id },
+        data: updateData,
+      });
+    } else {
+      config = await prisma.businessPricingConfig.create({
+        data: { businessId: null, pricePerKm: 3.0, basePrice: 5.0, minPrice: 8.0, ...updateData },
+      });
+    }
+
+    res.json(config);
+  } catch (err) { next(err); }
+});
+
 // ── GET /api/v1/admin/businesses/:id/pricing ──────────────────────────────
 // Get per-business pricing config (and global default for comparison)
 router.get('/businesses/:id/pricing', ...adminOnly, async (req, res, next) => {
@@ -346,61 +401,6 @@ router.delete('/businesses/:id/pricing', ...adminOnly, async (req, res, next) =>
     if (!existing) return res.status(404).json({ error: 'No custom pricing set for this business' });
     await prisma.businessPricingConfig.delete({ where: { businessId: req.params.id } });
     res.json({ ok: true });
-  } catch (err) { next(err); }
-});
-
-// ── GET /api/v1/admin/businesses/pricing ──────────────────────────────────
-// Get the global business pricing default
-router.get('/businesses/pricing', ...adminOnly, async (req, res, next) => {
-  const prisma = req.app.get('prisma');
-  try {
-    let config = await prisma.businessPricingConfig.findFirst({
-      where: { businessId: null },
-    });
-    // Auto-create if missing (shouldn't happen after seeding, but safe fallback)
-    if (!config) {
-      config = await prisma.businessPricingConfig.create({
-        data: { businessId: null, pricePerKm: 3.0, basePrice: 5.0, minPrice: 8.0, label: 'Business Rate' },
-      });
-    }
-    res.json(config);
-  } catch (err) { next(err); }
-});
-
-// ── PUT /api/v1/admin/businesses/pricing ──────────────────────────────────
-// Update global business pricing — no code deployment needed
-router.put('/businesses/pricing', ...adminOnly, async (req, res, next) => {
-  const prisma = req.app.get('prisma');
-  try {
-    const { pricePerKm, basePrice, minPrice, discountPercent, label } = req.body;
-
-    if (pricePerKm !== undefined && (isNaN(pricePerKm) || +pricePerKm < 0)) {
-      return res.status(400).json({ error: 'pricePerKm must be a non-negative number' });
-    }
-
-    let config = await prisma.businessPricingConfig.findFirst({ where: { businessId: null } });
-
-    const updateData = {
-      updatedBy: req.user.id,
-      ...(pricePerKm !== undefined    && { pricePerKm: +pricePerKm }),
-      ...(basePrice !== undefined     && { basePrice: +basePrice }),
-      ...(minPrice !== undefined      && { minPrice: +minPrice }),
-      ...(discountPercent !== undefined && { discountPercent: +discountPercent }),
-      ...(label !== undefined         && { label }),
-    };
-
-    if (config) {
-      config = await prisma.businessPricingConfig.update({
-        where: { id: config.id },
-        data: updateData,
-      });
-    } else {
-      config = await prisma.businessPricingConfig.create({
-        data: { businessId: null, pricePerKm: 3.0, basePrice: 5.0, minPrice: 8.0, ...updateData },
-      });
-    }
-
-    res.json(config);
   } catch (err) { next(err); }
 });
 

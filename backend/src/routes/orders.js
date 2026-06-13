@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { authenticate, authorize, optionalAuthenticate } = require('../middleware/auth');
 const { createNotification } = require('../lib/notifications');
+const { sendPushNotifications } = require('../lib/push');
 const { calculatePrice } = require('../lib/businessPricing');
 const { haversineKm } = require('../lib/geo');
 const dispatch = require('../lib/dispatch');
@@ -52,13 +53,16 @@ router.post('/estimate', optionalAuthenticate, async (req, res, next) => {
     const pricingResult = await calculatePrice(prisma, {
       distanceKm: km,
       accountType: req.user?.accountType || 'INDIVIDUAL',
-      businessId: req.user?.businessId || null
+      businessId: req.user?.businessId || null,
+      userId: req.user?.id || null,
     });
 
     res.json({
       estimatedPrice: pricingResult.estimatedPrice,
       distanceKm: Math.round(km * 10) / 10,
       businessSaving: pricingResult.businessSaving,
+      individualSaving: pricingResult.individualSaving,
+      discountPercent: pricingResult.discountPercent,
       rateUsed: pricingResult.rateUsed
     });
   } catch (err) {
@@ -113,7 +117,8 @@ router.post('/', authenticate, authorize('CUSTOMER'), async (req, res, next) => 
     const pricingResult = await calculatePrice(prisma, {
       distanceKm: km,
       accountType: req.user.accountType,
-      businessId: req.user.businessId
+      businessId: req.user.businessId,
+      userId: req.user.id,
     });
 
     const price = pricingResult.estimatedPrice;
@@ -286,16 +291,24 @@ router.patch('/:id/status', authenticate, authorize('RIDER'), async (req, res, n
     }
 
     const timestamp = new Date().toISOString();
-    io.to(`order:${order.id}`).emit('order:status_changed', { orderId: order.id, status, timestamp });
-    io.to('admin').emit('order:status_changed', { orderId: order.id, status, timestamp });
-    io.to(`rider:${rider.id}`).emit('order:status_changed', { orderId: order.id, status, timestamp });
-    io.to(`customer:${order.customerId}`).emit('order:status_changed', { orderId: order.id, status, timestamp });
+    const statusPayload = { orderId: order.id, status, timestamp };
+    if (status === 'PICKED_UP') statusPayload.pickedUpAt = order.pickedUpAt?.toISOString?.() ?? order.pickedUpAt;
+    if (status === 'DELIVERED') {
+      statusPayload.deliveredAt = order.deliveredAt?.toISOString?.() ?? order.deliveredAt;
+      if (order.deliveryPhotoUrl) statusPayload.deliveryPhotoUrl = order.deliveryPhotoUrl;
+    }
+    io.to(`order:${order.id}`).emit('order:status_changed', statusPayload);
+    io.to('admin').emit('order:status_changed', statusPayload);
+    io.to(`rider:${rider.id}`).emit('order:status_changed', statusPayload);
+    io.to(`customer:${order.customerId}`).emit('order:status_changed', statusPayload);
 
     const statusMessages = {
       ACCEPTED: 'Your order has been accepted by a rider',
       PICKED_UP: 'Your rider has picked up your package',
       IN_TRANSIT: 'Your package is on the way',
-      ARRIVED: 'Your rider has arrived',
+      ARRIVED: existing.pickedUpAt
+        ? 'Your rider has arrived at the drop-off location'
+        : 'Your rider has arrived at the pickup location',
       DELIVERED: 'Your delivery is complete',
     };
     if (statusMessages[status]) {
@@ -308,11 +321,19 @@ router.patch('/:id/status', authenticate, authorize('RIDER'), async (req, res, n
       });
     }
 
-    // Email notifications for key status transitions
+    // Push + email notifications for key status transitions
     const customer = await prisma.user.findUnique({
       where: { id: order.customerId },
-      select: { name: true, email: true },
+      select: { name: true, email: true, pushToken: true },
     });
+
+    if (statusMessages[status] && customer?.pushToken) {
+      sendPushNotifications([customer.pushToken], {
+        title: 'Order Update',
+        body: statusMessages[status],
+        data: { orderId: order.id, status },
+      }).catch(() => {});
+    }
     if (customer) {
       if (status === 'ACCEPTED') {
         sendRiderAssignedEmail({

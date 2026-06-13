@@ -15,32 +15,54 @@
  *
  * @param {object} prisma      - PrismaClient instance
  * @param {object} opts
- * @param {number} opts.distanceKm   - Haversine distance in kilometres
- * @param {string} opts.accountType  - 'INDIVIDUAL' | 'BUSINESS'
- * @param {string|null} opts.businessId - Business ID (null for individual orders)
+ * @param {number} opts.distanceKm    - Haversine distance in kilometres
+ * @param {string} opts.accountType   - 'INDIVIDUAL' | 'BUSINESS'
+ * @param {string|null} opts.businessId  - Business ID (null for individual orders)
+ * @param {string|null} opts.userId   - User ID (used to look up per-customer discount)
  *
- * @returns {{ estimatedPrice: number, businessSaving: number, rateUsed: string }}
+ * @returns {{ estimatedPrice: number, businessSaving: number, individualSaving: number, rateUsed: string }}
  */
-async function calculatePrice(prisma, { distanceKm, accountType, businessId }) {
+async function calculatePrice(prisma, { distanceKm, accountType, businessId, userId }) {
   // ── 1. Always load the standard individual rate ──────────────────────────
   let standardConfig = await prisma.pricingConfig.findFirst();
 
   // Safety fallback if no PricingConfig row exists yet
   if (!standardConfig) {
-    standardConfig = { basePrice: 5.0, pricePerKm: 4.0, minPrice: 8.0 };
+    standardConfig = { basePrice: 5.0, pricePerKm: 4.0, minPrice: 8.0, discountPercent: 0 };
   }
 
-  const standardPrice = Math.max(
+  const fullStandardPrice = Math.max(
     standardConfig.minPrice,
     standardConfig.basePrice + distanceKm * standardConfig.pricePerKm
   );
 
-  // ── 2. Return standard price for non-business orders ─────────────────────
+  // ── 2. Apply individual discount (global or per-customer override) ────────
   if (accountType !== 'BUSINESS' || !businessId) {
+    let discountPct = standardConfig.discountPercent ?? 0;
+
+    // Per-customer override wins if it's higher than the global rate
+    if (userId) {
+      const userRecord = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { discountPercent: true },
+      });
+      if (userRecord?.discountPercent > 0) {
+        discountPct = userRecord.discountPercent;
+      }
+    }
+
+    const discountedPrice = discountPct > 0
+      ? Math.max(0, fullStandardPrice * (1 - discountPct / 100))
+      : fullStandardPrice;
+
+    const individualSaving = Math.max(0, fullStandardPrice - discountedPrice);
+
     return {
-      estimatedPrice: parseFloat(standardPrice.toFixed(2)),
+      estimatedPrice: parseFloat(discountedPrice.toFixed(2)),
       businessSaving: 0,
-      rateUsed: 'STANDARD',
+      individualSaving: parseFloat(individualSaving.toFixed(2)),
+      discountPercent: discountPct,
+      rateUsed: discountPct > 0 ? 'INDIVIDUAL_DISCOUNTED' : 'STANDARD',
     };
   }
 
@@ -62,8 +84,9 @@ async function calculatePrice(prisma, { distanceKm, accountType, businessId }) {
   // If still nothing, fall back to standard rate
   if (!bizConfig) {
     return {
-      estimatedPrice: parseFloat(standardPrice.toFixed(2)),
+      estimatedPrice: parseFloat(fullStandardPrice.toFixed(2)),
       businessSaving: 0,
+      individualSaving: 0,
       rateUsed: 'STANDARD_FALLBACK',
     };
   }
@@ -80,11 +103,12 @@ async function calculatePrice(prisma, { distanceKm, accountType, businessId }) {
     : businessPrice;
 
   const finalPrice   = Math.max(bizConfig.minPrice, discounted);
-  const saving       = Math.max(0, standardPrice - finalPrice);
+  const saving       = Math.max(0, fullStandardPrice - finalPrice);
 
   return {
     estimatedPrice: parseFloat(finalPrice.toFixed(2)),
     businessSaving: parseFloat(saving.toFixed(2)),
+    individualSaving: 0,
     rateUsed: 'BUSINESS',
   };
 }

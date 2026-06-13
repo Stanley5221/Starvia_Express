@@ -229,11 +229,15 @@ export default function HomeScreen({ navigation }) {
 
           {/* ── Earnings card ── */}
           <LinearGradient
-            colors={[colors.primaryLight + '40', colors.primary + '20', colors.card]}
+            colors={[colors.primaryLight, colors.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.earningsCard}
           >
             <View style={styles.earningsHeader}>
-              <Ionicons name="wallet" size={18} color={colors.accent} />
+              <View style={styles.earningsIconWrap}>
+                <Ionicons name="wallet" size={15} color={colors.accent} />
+              </View>
               <Text style={styles.earningsTitle}>Earnings Overview</Text>
             </View>
             <View style={styles.earningsRow}>
@@ -410,15 +414,20 @@ const createStyles = (colors) => StyleSheet.create({
   activeBannerSub:   { fontSize: 12, color: colors.muted, marginTop: 2 },
 
   // Earnings card
-  earningsCard: { borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: 18, marginBottom: 16, ...shadow.md },
-  earningsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  earningsTitle:  { fontSize: 13, fontWeight: '700', color: colors.accent },
+  earningsCard: { borderRadius: radius.xl, padding: 18, marginBottom: 16, ...shadow.brand },
+  earningsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+  earningsIconWrap: {
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  earningsTitle:  { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.85)', letterSpacing: 0.3 },
   earningsRow:    { flexDirection: 'row', alignItems: 'center' },
   earningsCol:    { flex: 1, alignItems: 'center' },
-  earningsDivider: { width: 1, height: 40, backgroundColor: colors.borderLight },
-  earningsLabel:  { fontSize: 11, color: colors.muted, marginBottom: 4 },
-  earningsAmount: { fontSize: 17, fontWeight: '800', color: colors.accent },
-  earningsSub:    { fontSize: 10, color: colors.muted, marginTop: 3 },
+  earningsDivider: { width: 1, height: 44, backgroundColor: 'rgba(255,255,255,0.15)' },
+  earningsLabel:  { fontSize: 10, color: 'rgba(255,255,255,0.55)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.4 },
+  earningsAmount: { fontSize: 16, fontWeight: '900', color: colors.accent },
+  earningsSub:    { fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
 
   // Stats row
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },

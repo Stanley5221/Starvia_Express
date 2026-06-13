@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, Image, Animated, Platform, ScrollView, KeyboardAvoidingView,
@@ -49,7 +49,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 32, paddingBottom: 40 }]}
@@ -108,7 +108,7 @@ export default function LoginScreen() {
                 style={[styles.input, { flex: 1 }]}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPass}
                 returnKeyType="done"
@@ -142,7 +142,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </Animated.View>
 
-        <Text style={styles.footer}>Starvia Express · Rider App</Text>
+        <Text style={styles.footer}>Starvia Express Â· Rider App</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

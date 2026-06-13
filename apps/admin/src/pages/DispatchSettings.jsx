@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { Search, Loader, Save, Plus, Pencil, Trash2, X, Radio } from 'lucide-react'
+import { Search, Loader, Save, Plus, Pencil, Trash2, X, Radio, RefreshCw } from 'lucide-react'
 import api from '../../../../shared/api'
 import toast from 'react-hot-toast'
 
@@ -32,6 +32,10 @@ export default function DispatchSettings() {
   const [config, setConfig] = useState({ radiusKm: 5, fallbackSecs: 90, locationFreshMins: 10 })
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // Rider readiness
+  const [riders, setRiders] = useState([])
+  const [ridersLoading, setRidersLoading] = useState(false)
 
   // Global preview map state (used when no zones defined)
   const [previewCenter, setPreviewCenter] = useState(ACCRA)
@@ -70,6 +74,17 @@ export default function DispatchSettings() {
     }).catch(() => toast.error('Failed to load dispatch settings'))
       .finally(() => setLoading(false))
   }, [])
+
+  async function loadRiders() {
+    setRidersLoading(true)
+    try {
+      const { data } = await api.get('/admin/dispatch/riders')
+      setRiders(data)
+    } catch { toast.error('Failed to load rider status') }
+    finally { setRidersLoading(false) }
+  }
+
+  useEffect(() => { loadRiders() }, [])
 
   async function refreshZones() {
     const { data } = await api.get('/admin/dispatch/zones')
@@ -403,8 +418,44 @@ export default function DispatchSettings() {
             </form>
           </div>
 
-          {/* Section 2: Zones */}
-          <div className="card" style={{ padding: '1.1rem', flex: 1 }}>
+          {/* Section 2: Rider Readiness */}
+          <div className="card" style={{ padding: '1.1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Rider Readiness</span>
+              <button type="button" className="btn" style={{ padding: '4px 8px', fontSize: 12, gap: 4 }} onClick={loadRiders} disabled={ridersLoading}>
+                <RefreshCw size={12} className={ridersLoading ? 'loading' : ''} />
+              </button>
+            </div>
+            {riders.length === 0 && !ridersLoading && (
+              <p style={{ color: 'var(--text-muted)', fontSize: 12, textAlign: 'center', padding: '0.5rem 0' }}>No approved riders yet.</p>
+            )}
+            {riders.map(r => {
+              const online = r.isAvailable && !r.isSuspended
+              const stale  = r.locationAgeMinutes == null || r.locationAgeMinutes > config.locationFreshMins
+              const statusColor = r.isSuspended ? 'var(--danger, #ef4444)' : online ? 'var(--success, #10b981)' : 'var(--text-muted)'
+              return (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, flexShrink: 0, marginTop: 4 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.fullName}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {r.isSuspended ? 'Suspended' : r.isOnDelivery ? 'On delivery' : r.isAvailable ? 'Online' : 'Offline'}
+                      {' · '}
+                      {!r.hasLocation
+                        ? <span style={{ color: 'var(--danger, #ef4444)' }}>No location</span>
+                        : stale
+                          ? <span style={{ color: 'var(--warning, #f59e0b)' }}>Location {r.locationAgeMinutes}min old</span>
+                          : <span style={{ color: 'var(--success, #10b981)' }}>GPS {r.locationAgeMinutes}min ago</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Section 3: Zones */}
+          <div className="card" style={{ padding: '1.1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
               <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Dispatch Zones</span>
               {!showZoneForm && (
